@@ -1,51 +1,58 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using DiskQueue;
+using LiteDB;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
+using Oliver.Api.Configurations;
+using Oliver.Api.Extensions;
+using Oliver.Common.Models;
+using System;
+using System.IO;
 
 namespace Oliver.Api
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+        public Startup(IConfiguration configuration) => Configuration = configuration;
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            var storageOptions = Configuration.GetOptions<QueueStorage>();
+            var dbOptions = Configuration.GetOptions<Database>();
+
+            services
+                .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" }))
+                .AddSingleton(s => QueueFactory(storageOptions))
+                .AddSingleton(s => DbFactory(dbOptions))
+                .AddControllers();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
-            {
                 app.UseDeveloperExceptionPage();
-            }
 
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints =>
+            app.UseSwagger(c => c.RouteTemplate = "api/metadata/{documentName}/swagger.json");
+            app.UseSwaggerUI(c =>
             {
-                endpoints.MapControllers();
+                c.RoutePrefix = "api/metadata";
+                c.SwaggerEndpoint("v1/swagger.json", "API");
             });
+
+            app.UseHttpsRedirection()
+                .UseRouting()
+                .UseAuthorization()
+                .UseEndpoints(endpoints => endpoints.MapControllers())
+            ;
         }
+        private Func<Instance, IPersistentQueue> QueueFactory(QueueStorage options) =>
+            instance => new PersistentQueue(Path.Combine(options.Folder, instance.Tenant, instance.Environment));
+
+        private Func<ILiteDatabase> DbFactory(Database options) => () => new LiteDatabase(options.Path);
     }
 }

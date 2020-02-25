@@ -1,8 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <PublishTrimmed>True</PublishTrimmed>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DiskQueue.NetStandard" Version="1.0.1" />
+    <PackageReference Include="LiteDB" Version="5.0.3" />
+    <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Oliver.Common\Oliver.Common.csproj" />
+  </ItemGroup>
 
 
 </Project>
