@@ -11,6 +11,7 @@ using Oliver.Api.Extensions;
 using Oliver.Common.Models;
 using System;
 using System.IO;
+using System.Text.Json.Serialization;
 
 namespace Oliver.Api
 {
@@ -29,7 +30,12 @@ namespace Oliver.Api
                 .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" }))
                 .AddSingleton(s => QueueFactory(storageOptions))
                 .AddSingleton(s => DbFactory(dbOptions))
-                .AddControllers();
+                .AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    options.JsonSerializerOptions.IgnoreNullValues = true;
+                });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

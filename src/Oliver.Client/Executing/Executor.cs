@@ -15,11 +15,11 @@ namespace Oliver.Client.Executing
     internal class Executor : IExecutor
     {
         private readonly IRestClient restClient;
-        private readonly IOptions<Configurations.Instance> instanceOptions;
+        private readonly IOptions<Configurations.Client> instanceOptions;
         private readonly ILogger<Executor> logger;
         private readonly IRunner runner;
 
-        public Executor(IRestClient restClient, IOptions<Configurations.Instance> instanceOptions, ILogger<Executor> logger, IRunner runner)
+        public Executor(IRestClient restClient, IOptions<Configurations.Client> instanceOptions, ILogger<Executor> logger, IRunner runner)
         {
             this.restClient = restClient;
             this.instanceOptions = instanceOptions;
@@ -27,12 +27,12 @@ namespace Oliver.Client.Executing
             this.runner = runner;
         }
 
-        public async Task Execute(long executionId, CancellationToken cancellationToken)
+        public async Task Execute(Configurations.Client.Instance instance, long executionId, CancellationToken cancellationToken)
         {
             try
             {
                 var execution = await GetExecution(executionId, cancellationToken).ConfigureAwait(false);
-                await Execute(execution, cancellationToken);
+                await Execute(instance, execution, cancellationToken);
             }
             catch (Exception e)
             {
@@ -40,10 +40,12 @@ namespace Oliver.Client.Executing
             }
         }
 
-        private async Task Execute(Execution execution, CancellationToken cancellationToken)
+        private async Task Execute(Configurations.Client.Instance instance, Execution execution, CancellationToken cancellationToken)
         {
             var template = await GetTemplate(execution.TemplateId, cancellationToken);
-            var variables = await GetVariables(execution.VariableSetId, execution.VariableOverrides, cancellationToken);
+            var variables = execution.VariableSetId == default
+                ? null
+                : await GetVariables(execution.VariableSetId, execution.VariableOverrides, cancellationToken);
 
             var i = 1;
             foreach (var step in template.Steps.OrderBy(x => x.Order))
@@ -51,15 +53,17 @@ namespace Oliver.Client.Executing
                 var logs = new List<string> { $"Starting step {step.Order}: '{step.Name}'" };
 
                 // Builtin variables
-                variables.Values.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
-                variables.Values.Add(nameof(execution.Instance.Environment), execution.Instance.Environment);
+                variables?.Values.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
+                variables?.Values.Add(nameof(execution.Instance.Environment), execution.Instance.Environment);
 
-                var command = Substitute(step.Command, variables.Values);
-                var folder = Substitute(step.WorkingFolder, variables.Values);
-                folder = Path.GetFullPath(folder);
+                var command = Substitute(step.Command, variables?.Values);
+                var folder = Substitute(step.WorkingFolder, variables?.Values);
+                folder = Path.GetFullPath(folder, Path.GetFullPath(this.instanceOptions?.Value?.DefaultFolder ?? "."));
+                logs.Add($"Executing at folder: '{folder}'");
 
                 var result = step.Type switch
                 {
+                    Template.StepType.CMD => await this.runner.RunCMD(folder, command),
                     Template.StepType.PShell => await this.runner.RunPowerShell(folder, command),
                     Template.StepType.Docker => await this.runner.RunDocker(folder, command),
                     Template.StepType.DockerCompose => await this.runner.RunCompose(folder, command),
@@ -67,7 +71,10 @@ namespace Oliver.Client.Executing
                 };
 
                 if (!result.isSuccessed)
-                    await LogError(execution.Id, $"Step '{step.Name}' failed.", step.Order, i == template.Steps.Count, logs: result.logs);
+                {
+                    await LogError(execution.Id, $"Step '{step.Name}' failed.", step.Order, true, logs: result.logs.ToList());
+                    break;
+                }
                 else
                     logs.AddRange(result.logs);
 
@@ -90,7 +97,7 @@ namespace Oliver.Client.Executing
                 Executor = Environment.MachineName,
                 StepId = stepId,
                 IsSuccessed = true,
-                Log = logs.ToArray()
+                Log = logs
             });
 
             await this.restClient.ExecuteAsync(request, Method.PUT, CancellationToken.None);
@@ -99,15 +106,15 @@ namespace Oliver.Client.Executing
             this.logger.LogInformation(string.Join('\n', logs));
         }
 
-        private async Task LogError(long executionId, string message, int stepId = 0, bool isLastStep = false, Exception error = null, string[] logs = null)
+        private async Task LogError(long executionId, string message, int stepId = 0, bool isLastStep = false, Exception error = null, List<string> logs = null)
         {
             var request = new RestRequest($"api/exec/{executionId}", Method.PUT);
 
             if (isLastStep)
                 request.AddParameter("result", Execution.ExecutionState.Failed, ParameterType.QueryString);
-            logs = (logs ?? new string[0]).Concat(new[] { message }).ToArray();
+            logs = (logs ?? new List<string>()).Concat(new[] { message }).ToList();
             if (error != null)
-                logs = logs.Concat(new[] { error.Message, error.StackTrace }).ToArray();
+                logs = logs.Concat(new[] { error.Message, error.StackTrace }).ToList();
 
             request.AddJsonBody(new Execution.StepState
             {
@@ -165,6 +172,9 @@ namespace Oliver.Client.Executing
 
         private string Substitute(string command, Dictionary<string, string> variables)
         {
+            if (variables is null)
+                return command;
+
             var result = command;
             foreach (var variable in variables)
             {

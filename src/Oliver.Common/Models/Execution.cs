@@ -28,7 +28,7 @@ namespace Oliver.Common.Models
             public string StepName { get; set; }
             public string Executor { get; set; }
             public bool IsSuccessed { get; set; }
-            public string[] Log { get; set; }
+            public List<string> Log { get; set; } = new List<string>();
         }
     }
 }

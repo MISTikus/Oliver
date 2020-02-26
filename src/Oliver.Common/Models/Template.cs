@@ -19,7 +19,7 @@ namespace Oliver.Common.Models
             // public Dictionary<string, byte[]> Files { get; set; }
         }
 
-        public enum StepType
+        public enum StepType : byte
         {
             PShell,
             CMD,
