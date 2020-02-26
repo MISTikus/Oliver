@@ -48,6 +48,10 @@ namespace Oliver.Client.Executing
             {
                 var logs = new List<string> { $"Starting step {step.Order}: '{step.Name}'" };
 
+                // Builtin variables
+                execution.Variables.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
+                execution.Variables.Add(nameof(execution.Instance.Environment), execution.Instance.Environment);
+
                 var command = Substitute(step.Command, execution.Variables);
                 var folder = Substitute(step.WorkingFolder, execution.Variables);
                 folder = Path.GetFullPath(folder);
@@ -149,9 +153,9 @@ namespace Oliver.Client.Executing
             var result = command;
             foreach (var variable in variables)
             {
-                result = result.Replace($"{{{variable.Key}}}", variable.Value);
+                result = result.Replace($"{{{variable.Key}}}", variable.Value, StringComparison.InvariantCultureIgnoreCase);
             }
-            return command;
+            return result;
         }
     }
 }
