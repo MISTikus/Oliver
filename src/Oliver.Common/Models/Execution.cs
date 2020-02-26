@@ -6,11 +6,12 @@ namespace Oliver.Common.Models
     {
         public long Id { get; set; }
         public long TemplateId { get; set; }
+        public long VariableSetId { get; set; }
         public ExecutionState State { get; set; }
         public byte RetryCount { get; set; }
         public Instance Instance { get; set; }
         public List<StepState> StepsStates { get; set; } = new List<StepState>();
-        public Dictionary<string, string> Variables { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, string> VariableOverrides { get; set; } = new Dictionary<string, string>();
 
         public enum ExecutionState
         {

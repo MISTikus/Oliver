@@ -43,36 +43,34 @@ namespace Oliver.Client.Executing
         private async Task Execute(Execution execution, CancellationToken cancellationToken)
         {
             var template = await GetTemplate(execution.TemplateId, cancellationToken);
+            var variables = await GetVariables(execution.VariableSetId, execution.VariableOverrides, cancellationToken);
+
             var i = 1;
             foreach (var step in template.Steps.OrderBy(x => x.Order))
             {
                 var logs = new List<string> { $"Starting step {step.Order}: '{step.Name}'" };
 
                 // Builtin variables
-                execution.Variables.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
-                execution.Variables.Add(nameof(execution.Instance.Environment), execution.Instance.Environment);
+                variables.Values.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
+                variables.Values.Add(nameof(execution.Instance.Environment), execution.Instance.Environment);
 
-                var command = Substitute(step.Command, execution.Variables);
-                var folder = Substitute(step.WorkingFolder, execution.Variables);
+                var command = Substitute(step.Command, variables.Values);
+                var folder = Substitute(step.WorkingFolder, variables.Values);
                 folder = Path.GetFullPath(folder);
-                (bool isSuccessed, string[] logs) result = default;
-                switch (step.Type)
+
+                var result = step.Type switch
                 {
-                    case Template.StepType.PShell:
-                        result = await this.runner.RunPowerShell(folder, command);
-                        break;
-                    case Template.StepType.Docker:
-                        result = await this.runner.RunDocker(folder, command);
-                        break;
-                    case Template.StepType.DockerCompose:
-                        result = await this.runner.RunCompose(folder, command);
-                        break;
-                    default: throw new NotImplementedException();
-                }
+                    Template.StepType.PShell => await this.runner.RunPowerShell(folder, command),
+                    Template.StepType.Docker => await this.runner.RunDocker(folder, command),
+                    Template.StepType.DockerCompose => await this.runner.RunCompose(folder, command),
+                    _ => throw new NotImplementedException(),
+                };
+
                 if (!result.isSuccessed)
                     await LogError(execution.Id, $"Step '{step.Name}' failed.", step.Order, i == template.Steps.Count, logs: result.logs);
                 else
                     logs.AddRange(result.logs);
+
                 logs.Add($"Step {step.Order} - '{step.Name}' finished");
 
                 await LogStep(execution.Id, step.Order, i == template.Steps.Count, logs);
@@ -144,6 +142,23 @@ namespace Oliver.Client.Executing
                 return response.Data;
 
             this.logger.LogWarning($"Getting template. Response status code: {response.StatusCode}.\n" +
+                $"Response: {response.Content}");
+            return default;
+        }
+
+        private async Task<VariableSet> GetVariables(long variableSetId, Dictionary<string, string> overrides, CancellationToken cancellationToken)
+        {
+            var request = new RestRequest($"api/variables/{variableSetId}");
+            var response = await this.restClient.ExecuteAsync<VariableSet>(request, cancellationToken: cancellationToken);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                var result = response.Data;
+                foreach (var key in overrides.Keys)
+                    result.Values[key] = overrides[key];
+                return result;
+            }
+
+            this.logger.LogWarning($"Getting variables. Response status code: {response.StatusCode}.\n" +
                 $"Response: {response.Content}");
             return default;
         }
