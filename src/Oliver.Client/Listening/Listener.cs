@@ -28,10 +28,11 @@ namespace Oliver.Client.Listening
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
+            this.logger.LogInformation($"Started listening for {this.restClient.BaseUrl}");
             while (!cancellationToken.IsCancellationRequested)
             {
                 var options = this.instanceOptions.Value;
-                var request = new RestRequest($"{options.Tenant}/{options.Environment}/check")
+                var request = new RestRequest($"api/exec/{options.Tenant}/{options.Environment}/check")
                 {
                     Timeout = 10 * 60 * 1000
                 };
@@ -50,6 +51,7 @@ namespace Oliver.Client.Listening
 
                 await Task.Delay(3000);
             }
+            this.logger.LogInformation("Stop listening...");
         }
 
         public async Task StopAsync(CancellationToken cancellationToken) { }

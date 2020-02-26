@@ -32,7 +32,8 @@ namespace Oliver.Client
                 var serverOptions = hostContext.Configuration.GetOptions<Server>();
 
                 services
-                    .Configure<Instance>(hostContext.Configuration)
+                    .ConfigureOptions<Instance>(hostContext.Configuration)
+                    .AddTransient<IRunner, Runner>()
                     .AddTransient<IRestClient>(s => new RestClient(serverOptions.BaseUrl))
                     .AddSingleton<Executor>() // ToDo: check scope
                     .AddSingleton<Func<IExecutor>>(s => () => s.GetRequiredService<Executor>())
@@ -52,5 +53,8 @@ namespace Oliver.Client
             return options;
         }
 
+        private static IServiceCollection ConfigureOptions<T>(this IServiceCollection services, IConfiguration configuration)
+            where T : class => services
+            .Configure<T>(configuration.GetSection(typeof(T).Name));
     }
 }

@@ -73,7 +73,31 @@ namespace Oliver.Api.Controllers
             execution.StepsStates.Add(stepState);
 
             if (result.HasValue)
-                execution.State = result.Value;
+            {
+                if (result.Value == Execution.ExecutionState.Failed)
+                {
+                    if (execution.State != Execution.ExecutionState.Retrying || execution.RetryCount < 3)
+                    {
+                        await Task.Delay(3000);
+
+                        lock (locker)
+                        {
+                            if (!queues.ContainsKey(execution.Instance))
+                                queues.Add(execution.Instance, this.queueFactory(execution.Instance));
+                        }
+                        var queue = queues[execution.Instance];
+                        using var session = queue.OpenSession();
+                        session.Enqueue(new ValueTuple<long>(execution.Id).Serialize());
+                        session.Flush();
+                        execution.RetryCount += 1;
+                        execution.State = Execution.ExecutionState.Retrying;
+                    }
+                    else
+                        execution.State = result.Value;
+                }
+                else
+                    execution.State = result.Value;
+            }
 
             collection.Update(execution);
 
@@ -96,7 +120,7 @@ namespace Oliver.Api.Controllers
             var previous = collection.Find(x => x.Instance.Tenant == execution.Instance.Tenant && x.Instance.Environment == execution.Instance.Environment);
             foreach (var p in previous)
             {
-                if (p.State == Execution.ExecutionState.Added)
+                if (p.State == Execution.ExecutionState.Added || p.State == Execution.ExecutionState.Retrying)
                 {
                     p.State = Execution.ExecutionState.Declined;
                     collection.Update(p);
