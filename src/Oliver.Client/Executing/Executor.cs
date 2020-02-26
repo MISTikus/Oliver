@@ -47,14 +47,14 @@ namespace Oliver.Client.Executing
                 ? null
                 : await GetVariables(execution.VariableSetId, execution.VariableOverrides, cancellationToken);
 
+            // Builtin variables
+            variables?.Values.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
+            variables?.Values.Add(nameof(execution.Instance.Environment), execution.Instance.Environment);
+
             var i = 1;
             foreach (var step in template.Steps.OrderBy(x => x.Order))
             {
                 var logs = new List<string> { $"Starting step {step.Order}: '{step.Name}'" };
-
-                // Builtin variables
-                variables?.Values.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
-                variables?.Values.Add(nameof(execution.Instance.Environment), execution.Instance.Environment);
 
                 var command = Substitute(step.Command, variables?.Values);
                 var folder = Substitute(step.WorkingFolder, variables?.Values);

@@ -1,19 +1,29 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2AC3A194-7D5C-4C10-B620-015A0CE6CC26}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Oliver.Api", "src\Oliver.Api\Oliver.Api.csproj", "{E25BF0A0-63E3-4C52-A697-9A05A544976B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Oliver.Api", "src\Oliver.Api\Oliver.Api.csproj", "{E25BF0A0-63E3-4C52-A697-9A05A544976B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Oliver.Client", "src\Oliver.Client\Oliver.Client.csproj", "{2F542607-444E-4DAD-84D4-0A26724462B0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Oliver.Client", "src\Oliver.Client\Oliver.Client.csproj", "{2F542607-444E-4DAD-84D4-0A26724462B0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D99FC4A4-08D3-4D37-815D-B101274E7C96}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Oliver.Tests", "tests\Oliver.Tests\Oliver.Tests.csproj", "{78672738-8840-43F0-9C5B-E4C76BB5813A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Oliver.Tests", "tests\Oliver.Tests\Oliver.Tests.csproj", "{78672738-8840-43F0-9C5B-E4C76BB5813A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Oliver.Common", "src\Oliver.Common\Oliver.Common.csproj", "{25EC3DEC-FC68-4664-A1BB-33D3106F2996}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Oliver.Common", "src\Oliver.Common\Oliver.Common.csproj", "{25EC3DEC-FC68-4664-A1BB-33D3106F2996}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F6B83B7B-2BF0-431C-844F-3AC0A3B02303}"
+	ProjectSection(SolutionItems) = preProject
+		tools\.env = tools\.env
+		tools\build.docker.ps1 = tools\build.docker.ps1
+		tools\docker-compose.yml = tools\docker-compose.yml
+		tools\release.docker.ps1 = tools\release.docker.ps1
+		tools\run.compose.ps1 = tools\run.compose.ps1
+		tools\run.docker.ps1 = tools\run.docker.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,9 +33,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{E25BF0A0-63E3-4C52-A697-9A05A544976B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -77,10 +84,16 @@ Global
 		{25EC3DEC-FC68-4664-A1BB-33D3106F2996}.Release|x86.ActiveCfg = Release|Any CPU
 		{25EC3DEC-FC68-4664-A1BB-33D3106F2996}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{E25BF0A0-63E3-4C52-A697-9A05A544976B} = {2AC3A194-7D5C-4C10-B620-015A0CE6CC26}
 		{2F542607-444E-4DAD-84D4-0A26724462B0} = {2AC3A194-7D5C-4C10-B620-015A0CE6CC26}
 		{78672738-8840-43F0-9C5B-E4C76BB5813A} = {D99FC4A4-08D3-4D37-815D-B101274E7C96}
 		{25EC3DEC-FC68-4664-A1BB-33D3106F2996} = {2AC3A194-7D5C-4C10-B620-015A0CE6CC26}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F48D62C4-9FF5-4D99-9A8C-A69FDFC8F3D0}
 	EndGlobalSection
 EndGlobal
