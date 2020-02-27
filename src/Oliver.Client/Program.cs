@@ -36,6 +36,7 @@ namespace Oliver.Client
                     .AddTransient<IRunner, Runner>()
                     .AddTransient<IRestClient>(s => new RestClient(serverOptions.BaseUrl))
                     .AddSingleton<Executor>() // ToDo: check scope
+                    .AddSingleton<ILogSender, LogSender>()
                     .AddSingleton<Func<IExecutor>>(s => () => s.GetRequiredService<Executor>())
                     .AddLogging(c =>
                     {

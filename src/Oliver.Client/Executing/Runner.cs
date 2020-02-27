@@ -8,7 +8,7 @@ namespace Oliver.Client.Executing
     internal class Runner : IRunner
     {
         public async Task<(bool isSuccessed, string[] logs)> RunCMD(string folder, string command) => await Run("CMD", "/C", folder, command);
-        public async Task<(bool isSuccessed, string[] logs)> RunCompose(string folder, string command) => await Run("docker-compose", "-Command", folder, command);
+        public async Task<(bool isSuccessed, string[] logs)> RunCompose(string folder, string command) => await Run("docker-compose", "", folder, command);
         public async Task<(bool isSuccessed, string[] logs)> RunDocker(string folder, string command) => await Run("docker", "", folder, command);
         public async Task<(bool isSuccessed, string[] logs)> RunPowerShell(string folder, string command) => await Run("powershell", "-Command", folder, command);
 

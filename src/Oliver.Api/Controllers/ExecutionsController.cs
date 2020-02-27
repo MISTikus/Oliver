@@ -1,6 +1,7 @@
 ﻿using DiskQueue;
 using LiteDB;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Oliver.Api.Extensions;
 using Oliver.Common.Models;
 using System;
@@ -16,14 +17,15 @@ namespace Oliver.Api.Controllers
     {
         private readonly Func<Instance, IPersistentQueue> queueFactory;
         private readonly Func<ILiteDatabase> databaseFactory;
-
+        private readonly ILogger<ExecutionsController> logger;
         private static readonly Dictionary<Instance, IPersistentQueue> queues = new Dictionary<Instance, IPersistentQueue>();
         private static readonly object locker = new object();
 
-        public ExecutionsController(Func<Instance, IPersistentQueue> queueFactory, Func<ILiteDatabase> databaseFactory)
+        public ExecutionsController(Func<Instance, IPersistentQueue> queueFactory, Func<ILiteDatabase> databaseFactory, ILogger<ExecutionsController> logger)
         {
             this.queueFactory = queueFactory;
             this.databaseFactory = databaseFactory;
+            this.logger = logger;
         }
 
         [HttpGet("{tenant}/{environment}/check")]
@@ -67,6 +69,11 @@ namespace Oliver.Api.Controllers
         public async Task<IActionResult> AddExecutionStepLog([FromRoute]long id, [FromBody]Execution.StepState stepState,
             [FromQuery]Execution.ExecutionState? result)
         {
+            this.logger.LogInformation("Received execution step log.");
+            this.logger.LogInformation($"ExecutionId: '{id}'. Result: {result}.");
+            this.logger.LogDebug($"Logs:");
+            this.logger.LogDebug(string.Join('\n', stepState.Log));
+
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Execution>();
             var execution = collection.FindById(id);

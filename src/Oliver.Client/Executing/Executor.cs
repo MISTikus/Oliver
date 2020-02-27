@@ -18,13 +18,15 @@ namespace Oliver.Client.Executing
         private readonly IOptions<Configurations.Client> instanceOptions;
         private readonly ILogger<Executor> logger;
         private readonly IRunner runner;
+        private readonly ILogSender logSender;
 
-        public Executor(IRestClient restClient, IOptions<Configurations.Client> instanceOptions, ILogger<Executor> logger, IRunner runner)
+        public Executor(IRestClient restClient, IOptions<Configurations.Client> instanceOptions, IRunner runner, ILogSender logSender, ILogger<Executor> logger)
         {
             this.restClient = restClient;
             this.instanceOptions = instanceOptions;
             this.logger = logger;
             this.runner = runner;
+            this.logSender = logSender;
         }
 
         public async Task Execute(Configurations.Client.Instance instance, long executionId, CancellationToken cancellationToken)
@@ -36,7 +38,7 @@ namespace Oliver.Client.Executing
             }
             catch (Exception e)
             {
-                await LogError(executionId, "Failed to execute", isLastStep: true, error: e);
+                await this.logSender.LogError(executionId, "Failed to execute", isLastStep: true, error: e, cancellationToken: cancellationToken);
             }
         }
 
@@ -72,7 +74,7 @@ namespace Oliver.Client.Executing
 
                 if (!result.isSuccessed)
                 {
-                    await LogError(execution.Id, $"Step '{step.Name}' failed.", step.Order, true, logs: result.logs.ToList());
+                    await this.logSender.LogError(execution.Id, $"Step '{step.Name}' failed.", step.Order, true, logs: result.logs.ToList(), cancellationToken: cancellationToken);
                     break;
                 }
                 else
@@ -80,53 +82,9 @@ namespace Oliver.Client.Executing
 
                 logs.Add($"Step {step.Order} - '{step.Name}' finished");
 
-                await LogStep(execution.Id, step.Order, i == template.Steps.Count, logs);
+                await this.logSender.LogStep(execution.Id, step.Order, i == template.Steps.Count, logs, cancellationToken: cancellationToken);
                 i++;
             }
-        }
-
-        private async Task LogStep(long executionId, int stepId, bool isLastStep = false, List<string> logs = null)
-        {
-            var request = new RestRequest($"api/exec/{executionId}", Method.PUT);
-
-            if (isLastStep)
-                request.AddParameter("result", Execution.ExecutionState.Successed, ParameterType.QueryString);
-
-            request.AddJsonBody(new Execution.StepState
-            {
-                Executor = Environment.MachineName,
-                StepId = stepId,
-                IsSuccessed = true,
-                Log = logs
-            });
-
-            await this.restClient.ExecuteAsync(request, Method.PUT, CancellationToken.None);
-
-            this.logger.LogInformation($"ExecutionId: {executionId};\nStepId: {stepId}");
-            this.logger.LogInformation(string.Join('\n', logs));
-        }
-
-        private async Task LogError(long executionId, string message, int stepId = 0, bool isLastStep = false, Exception error = null, List<string> logs = null)
-        {
-            var request = new RestRequest($"api/exec/{executionId}", Method.PUT);
-
-            if (isLastStep)
-                request.AddParameter("result", Execution.ExecutionState.Failed, ParameterType.QueryString);
-            logs = (logs ?? new List<string>()).Concat(new[] { message }).ToList();
-            if (error != null)
-                logs = logs.Concat(new[] { error.Message, error.StackTrace }).ToList();
-
-            request.AddJsonBody(new Execution.StepState
-            {
-                Executor = Environment.MachineName,
-                StepId = stepId,
-                IsSuccessed = false,
-                Log = logs
-            });
-
-            await this.restClient.ExecuteAsync(request, Method.PUT, CancellationToken.None);
-
-            this.logger.LogWarning(error, $"{message}\nExecutionId: {executionId};\nStepId: {stepId}");
         }
 
         private async Task<Execution> GetExecution(long executionId, CancellationToken cancellationToken)
