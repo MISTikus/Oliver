@@ -31,25 +31,32 @@ namespace Oliver.Client.Listening
             while (!cancellationToken.IsCancellationRequested)
             {
                 var options = this.instanceOptions.Value;
-                foreach (var instance in options.Instances)
+                var tasks = new Task[options.Instances.Length];
+                for (var i = 0; i < options.Instances.Length; i++)
                 {
-                    var request = new RestRequest($"api/exec/{instance.Tenant}/{instance.Environment}/check")
+                    var instance = options.Instances[i];
+                    tasks[i] = Task.Run(async () =>
                     {
-                        Timeout = 10 * 60 * 1000
-                    };
+                        var request = new RestRequest($"api/exec/{instance.Tenant}/{instance.Environment}/check")
+                        {
+                            Timeout = 10 * 60 * 1000
+                        };
 
-                    var response = await this.restClient.ExecuteAsync<long>(request, cancellationToken: cancellationToken);
-                    if (response.StatusCode == HttpStatusCode.OK)
-                    {
-                        var executor = this.executorFactory();
-                        executor.Execute(instance, response.Data, cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        this.logger.LogWarning($"Response status code: {response.StatusCode}.\n" +
-                            $"Response: {response.Content}");
-                    }
+                        var response = await this.restClient.ExecuteAsync<long>(request, cancellationToken: cancellationToken);
+                        if (response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var executor = this.executorFactory();
+                            await executor.Execute(instance, response.Data, cancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            this.logger.LogWarning($"Instance: {instance.Tenant}.{instance.Environment}.\n" +
+                                $"Response status code: {response.StatusCode}.\n" +
+                                $"Response: {response.Content}");
+                        }
+                    });
                 }
+                await Task.WhenAll(tasks);
                 await Task.Delay(3000);
             }
             this.logger.LogInformation("Stop listening...");

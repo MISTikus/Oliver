@@ -176,10 +176,16 @@ namespace Oliver.Client.Executing
                 return command;
 
             var result = command;
-            foreach (var variable in variables)
+            string temp;
+            do
             {
-                result = result.Replace($"{{{variable.Key}}}", variable.Value, StringComparison.InvariantCultureIgnoreCase);
+                temp = result;
+                foreach (var variable in variables)
+                {
+                    result = result.Replace($"{{{variable.Key}}}", variable.Value, StringComparison.InvariantCultureIgnoreCase);
+                }
             }
+            while (temp != result);
             return result;
         }
     }

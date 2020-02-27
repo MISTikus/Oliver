@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -13,6 +14,7 @@ namespace Oliver.Client.Executing
 
         private async Task<(bool isSuccessed, string[] logs)> Run(string exec, string argPrefix, string folder, string command)
         {
+            var logs = new List<string>();
             try
             {
                 var psi = new ProcessStartInfo(exec)
@@ -24,13 +26,24 @@ namespace Oliver.Client.Executing
                     RedirectStandardOutput = true
                 };
                 psi.Arguments = $"{argPrefix} {command}";
+                logs.Add($"Executiong command:\n{psi.FileName} {psi.Arguments}");
+
                 var process = Process.Start(psi);
                 process.WaitForExit();
-                return (process.ExitCode == 0, new[] { await process.StandardOutput.ReadToEndAsync(), await process.StandardError.ReadToEndAsync() });
+
+                string o, e;
+                if (!string.IsNullOrWhiteSpace(o = await process.StandardOutput.ReadToEndAsync()))
+                    logs.Add(o);
+                if (!string.IsNullOrWhiteSpace(e = await process.StandardError.ReadToEndAsync()))
+                    logs.Add(e);
+
+                return (process.ExitCode == 0, logs.ToArray());
             }
             catch (Exception e)
             {
-                return (false, new[] { e.Message, e.StackTrace });
+                logs.Add(e.Message);
+                logs.Add(e.StackTrace);
+                return (false, logs.ToArray());
             }
         }
     }
