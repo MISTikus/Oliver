@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Oliver.Api.Configurations;
 using Oliver.Api.Extensions;
+using Oliver.Api.Services;
 using Oliver.Common.Models;
 using System;
 using System.IO;
@@ -30,6 +31,7 @@ namespace Oliver.Api
                 .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" }))
                 .AddSingleton(s => QueueFactory(storageOptions))
                 .AddSingleton(s => DbFactory(dbOptions))
+                .AddTransient<Func<IBlobStorage>>(c => () => new FileSystemStorage("."))
                 .AddControllers()
                 .AddJsonOptions(options =>
                 {

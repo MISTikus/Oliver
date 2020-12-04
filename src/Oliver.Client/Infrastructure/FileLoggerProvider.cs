@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Oliver.Client.Infrastructure
 {
-    internal class FileProvider : ILoggerProvider
+    internal class FileLoggerProvider : ILoggerProvider
     {
         private readonly string fileName;
         private readonly int maxLogSizeMb;
@@ -13,7 +13,7 @@ namespace Oliver.Client.Infrastructure
         private readonly string archiveLogFileFormat;
         private readonly object locker = new object();
 
-        public FileProvider(LogFile options)
+        public FileLoggerProvider(LogFile options)
         {
             this.fileName = Path.GetFullPath(options.FileName);
             this.maxLogSizeMb = options.MaxLogSizeMb;

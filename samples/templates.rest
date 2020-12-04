@@ -1,0 +1,13 @@
+### Variables
+@host = https://localhost:5001
+
+### Add Template
+POST {{host}}/api/templates
+Content-Type: multipart/form-data; boundary=some
+
+--some
+Content-Disposition: form-data; name="Body"; filename="networks.rest"
+Content-Type: text/plain
+
+< ./networks.rest
+--some--

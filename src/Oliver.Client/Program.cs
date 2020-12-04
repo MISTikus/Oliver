@@ -42,7 +42,7 @@ namespace Oliver.Client
                     {
                         c.AddConsole();
                         if (!args.Contains("--nologs"))
-                            c.AddProvider(new FileProvider(logOptions));
+                            c.AddProvider(new FileLoggerProvider(logOptions));
                     });
 
                 services.AddHostedService<Listener>();

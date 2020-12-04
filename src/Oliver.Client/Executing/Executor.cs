@@ -18,14 +18,18 @@ namespace Oliver.Client.Executing
         private readonly IOptions<Configurations.Client> instanceOptions;
         private readonly ILogger<Executor> logger;
         private readonly IRunner runner;
+        private readonly IFileManager fileManager;
         private readonly ILogSender logSender;
 
-        public Executor(IRestClient restClient, IOptions<Configurations.Client> instanceOptions, IRunner runner, ILogSender logSender, ILogger<Executor> logger)
+        public Executor(IRestClient restClient, IOptions<Configurations.Client> instanceOptions,
+            IRunner runner, IFileManager fileManager,
+            ILogSender logSender, ILogger<Executor> logger)
         {
             this.restClient = restClient;
             this.instanceOptions = instanceOptions;
             this.logger = logger;
             this.runner = runner;
+            this.fileManager = fileManager;
             this.logSender = logSender;
         }
 
@@ -65,6 +69,7 @@ namespace Oliver.Client.Executing
 
                 var result = step.Type switch
                 {
+                    Template.StepType.Archive => await this.fileManager.UnpackArchive(folder, step),
                     Template.StepType.CMD => await this.runner.RunCMD(folder, command),
                     Template.StepType.PShell => await this.runner.RunPowerShell(folder, command),
                     Template.StepType.Docker => await this.runner.RunDocker(folder, command),

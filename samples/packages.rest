@@ -1,0 +1,17 @@
+### Variables
+@host = https://localhost:5001
+
+### Add File
+POST {{host}}/api/packages
+Content-Type: multipart/form-data; boundary=package
+
+--package
+Content-Disposition: form-data; name="Version"
+
+1.0.1
+--package
+Content-Disposition: form-data; name="Body"; filename="somefile.zip"
+Content-Type: application/zip
+
+< ./somefile.zip
+--package--
