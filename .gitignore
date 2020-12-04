@@ -34,3 +34,5 @@ packages/
 /queues/**
 #Database files
 *.db
+#KDiff
+*.orig
