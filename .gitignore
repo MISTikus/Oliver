@@ -30,3 +30,7 @@ _ReSharper*/
 .vs/
 #Nuget packages folder
 packages/
+#Queue files
+/queues/**
+#Database files
+*.db
