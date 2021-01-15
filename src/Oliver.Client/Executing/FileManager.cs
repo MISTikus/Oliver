@@ -1,5 +1,4 @@
-﻿using Oliver.Common.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -9,26 +8,26 @@ namespace Oliver.Client.Executing
 {
     public class FileManager : IFileManager
     {
-        public async Task<(bool isSuccessed, string[] logs)> UnpackArchive(string folder, Template.Step step)
+        public async Task<(bool isSuccessed, string[] logs)> UnpackArchive(string folder, Common.Models.File file)
         {
             var logs = new List<string>
             {
-                $"Start unpacking file {step.Command} to foler: {folder}."
+                $"Start unpacking file {file.FileName} to foler: {folder}."
             };
 
             try
             {
-                using var stream = new MemoryStream(step.Body.Body);
+                using var stream = new MemoryStream(file.Body);
                 using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
                 archive.ExtractToDirectory(folder);
 
-                logs.Add($"{step.Command} unpacked.");
+                logs.Add($"{file.FileName} unpacked.");
 
                 return (true, logs.ToArray());
             }
             catch (Exception e)
             {
-                logs.Add($"Failed to unpack {step.Command} because of error:");
+                logs.Add($"Failed to unpack {file.FileName} because of error:");
                 logs.Add(e.Message);
                 logs.Add(e.StackTrace);
                 // ToDo: add inner exceptions to logs
@@ -39,6 +38,6 @@ namespace Oliver.Client.Executing
 
     public interface IFileManager
     {
-        Task<(bool isSuccessed, string[] logs)> UnpackArchive(string folder, Template.Step step);
+        Task<(bool isSuccessed, string[] logs)> UnpackArchive(string folder, Common.Models.File file);
     }
 }

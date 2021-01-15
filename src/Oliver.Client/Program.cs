@@ -34,6 +34,7 @@ namespace Oliver.Client
                 services
                     .ConfigureOptions<Configurations.Client>(hostContext.Configuration)
                     .AddTransient<IRunner, Runner>()
+                    .AddTransient<IFileManager, FileManager>()
                     .AddTransient<IRestClient>(s => new RestClient(serverOptions.BaseUrl))
                     .AddSingleton<Executor>() // ToDo: check scope
                     .AddSingleton<ILogSender, LogSender>()

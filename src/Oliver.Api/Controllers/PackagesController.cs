@@ -40,9 +40,43 @@ namespace Oliver.Api.Controllers
                 collection.Update(file);
 
             using var storage = this.storageFactory();
-            await storage.Save(file.Id, formFile);
+            await storage.Save(file.FileName, file.Version, formFile);
 
             return Ok(file.Id);
+        }
+
+        [HttpGet("{fileName}")]
+        public async Task<IActionResult> GetFile([FromRoute] string fileName, [FromQuery] string version)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return BadRequest();
+
+            using var db = this.databaseFactory();
+            var collection = db.GetCollection<File>();
+
+            File file = null;
+            if (string.IsNullOrWhiteSpace(version))
+            {
+                var latest = collection.Query()
+                    .Where(f => f.FileName == fileName)
+                    .OrderBy(f => f.Version, Query.Descending)
+                    .Limit(1)
+                    .SingleOrDefault();
+                if (latest is { })
+                    file = latest;
+            }
+            else
+                file = collection.FindById($"{fileName}:{version}");
+
+            if (file is null)
+                return NotFound();
+
+            using var storage = this.storageFactory();
+            file.Body = await storage.Read(file.FileName, file.Version);
+
+            return file.Body is null
+                ? (IActionResult)NotFound()
+                : Ok(file);
         }
 
         private File MapToFile(FileRequest request)
@@ -52,7 +86,7 @@ namespace Oliver.Api.Controllers
                 Id = $"{request.Body.FileName}:{request.Version}",
                 FileName = request.Body.FileName,
                 ContentType = request.Body.ContentType,
-                Version = Version.Parse(request.Version),
+                Version = request.Version,
                 Body = null
             };
         }

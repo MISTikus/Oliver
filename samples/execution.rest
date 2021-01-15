@@ -1,0 +1,14 @@
+### Variables
+@host = https://localhost:5001
+
+### Add Template
+POST {{host}}/api/exec
+Content-Type: application/json
+
+{
+    "templateId": 1,
+    "instance": {
+        "tenant": "Some",
+        "environment": "Prod"
+    }
+}

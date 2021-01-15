@@ -8,10 +8,14 @@ Content-Type: multipart/form-data; boundary=package
 --package
 Content-Disposition: form-data; name="Version"
 
-1.0.1
+1.0.2
 --package
 Content-Disposition: form-data; name="Body"; filename="somefile.zip"
 Content-Type: application/zip
 
 < ./somefile.zip
 --package--
+
+
+### Get file by name
+GET {{host}}/api/packages/somefile.zip

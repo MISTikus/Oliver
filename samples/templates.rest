@@ -3,11 +3,19 @@
 
 ### Add Template
 POST {{host}}/api/templates
-Content-Type: multipart/form-data; boundary=some
+Content-Type: application/json
 
---some
-Content-Disposition: form-data; name="Body"; filename="networks.rest"
-Content-Type: text/plain
-
-< ./networks.rest
---some--
+{
+    "steps":[{
+            "order": 1,
+            "name": "Echo start process",
+            "type": "CMD",
+            "command": "echo ***  Started!!!  ***"
+        },{
+            "order": 2,
+            "name": "Load archive",
+            "type": "Archive",
+            "fileName": "somefile.zip"
+        }
+    ]
+}

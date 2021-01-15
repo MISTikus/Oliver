@@ -67,9 +67,11 @@ namespace Oliver.Client.Executing
                 folder = Path.GetFullPath(folder, Path.GetFullPath(this.instanceOptions?.Value?.DefaultFolder ?? "."));
                 logs.Add($"Executing at folder: '{folder}'");
 
+                Common.Models.File file;
                 var result = step.Type switch
                 {
-                    Template.StepType.Archive => await this.fileManager.UnpackArchive(folder, step),
+                    Template.StepType.Archive when (file = await GetArchive(step.FileName)) is { }
+                        => await this.fileManager.UnpackArchive(folder, file),
                     Template.StepType.CMD => await this.runner.RunCMD(folder, command),
                     Template.StepType.PShell => await this.runner.RunPowerShell(folder, command),
                     Template.StepType.Docker => await this.runner.RunDocker(folder, command),
@@ -129,6 +131,19 @@ namespace Oliver.Client.Executing
             }
 
             this.logger.LogWarning($"Getting variables. Response status code: {response.StatusCode}.\n" +
+                $"Response: {response.Content}");
+            return default;
+        }
+
+        private async Task<Common.Models.File> GetArchive(string fileName, string version = null, CancellationToken cancellationToken = default)
+        {
+            var request = new RestRequest($"api/packages/{fileName}"
+                + (string.IsNullOrWhiteSpace(version) ? "" : $"?version={version}"));
+            var response = await this.restClient.ExecuteAsync<Common.Models.File>(request, cancellationToken: cancellationToken);
+            if (response.StatusCode == HttpStatusCode.OK)
+                return response.Data;
+
+            this.logger.LogWarning($"Getting template. Response status code: {response.StatusCode}.\n" +
                 $"Response: {response.Content}");
             return default;
         }

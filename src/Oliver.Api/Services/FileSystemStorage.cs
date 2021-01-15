@@ -11,27 +11,35 @@ namespace Oliver.Api.Services
 
         public FileSystemStorage(string storageFolder) => this.storageFolder = storageFolder;
 
-        public async Task Save(string id, IFormFile formFile)
+        public async Task Save(string fileName, string version, IFormFile formFile)
         {
-            if (!Directory.Exists(this.storageFolder))
-                Directory.CreateDirectory(this.storageFolder);
+            var folder = Path.Combine(this.storageFolder, fileName.Replace(".", "_"), version);
 
-            var fileName = Path.Combine(this.storageFolder, id);
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
 
-            //using var fileStream = File.Create(fileName);
-            //stream.Seek(0, SeekOrigin.Begin);
-            //stream.CopyTo(fileStream);
-            //stream.Close();
+            var filePath = Path.Combine(folder, fileName);
 
-            using var fileStream = new FileStream(fileName, FileMode.Create);
-            await formFile.CopyToAsync(fileStream); // ToDo: figure out why it creates an empty file
+            using var fileStream = new FileStream(filePath, FileMode.Create);
+            await formFile.CopyToAsync(fileStream);
+        }
+
+        public Task<byte[]> Read(string fileName, string version)
+        {
+            var folder = fileName.Replace(".", "_");
+            var filePath = Path.Combine(this.storageFolder, folder, version, fileName);
+            return File.Exists(filePath)
+                ? File.ReadAllBytesAsync(filePath)
+                : null;
         }
 
         public void Dispose() { }
+
     }
 
     public interface IBlobStorage : IDisposable
     {
-        Task Save(string id, IFormFile formFile);
+        Task Save(string fileName, string version, IFormFile formFile);
+        Task<byte[]> Read(string fileName, string version);
     }
 }

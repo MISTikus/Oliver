@@ -14,10 +14,7 @@ namespace Oliver.Common.Models
             public StepType Type { get; set; }
             public string Command { get; set; }
             public string WorkingFolder { get; set; }
-            public File Body { get; set; }
-
-            // Not now...
-            // public Dictionary<string, byte[]> Files { get; set; }
+            public string FileName { get; set; }
         }
 
         public enum StepType : byte

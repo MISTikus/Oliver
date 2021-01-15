@@ -31,7 +31,7 @@ namespace Oliver.Api
                 .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" }))
                 .AddSingleton(s => QueueFactory(storageOptions))
                 .AddSingleton(s => DbFactory(dbOptions))
-                .AddTransient<Func<IBlobStorage>>(c => () => new FileSystemStorage("."))
+                .AddTransient<Func<IBlobStorage>>(c => () => new FileSystemStorage(".\\fileStorage"))
                 .AddControllers()
                 .AddJsonOptions(options =>
                 {
