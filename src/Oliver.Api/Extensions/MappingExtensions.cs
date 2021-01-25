@@ -9,14 +9,14 @@ namespace Oliver.Api.Extensions
         public static T Deserialize<T>(this byte[] bytes)
         {
             using var ms = new MemoryStream(bytes);
-            using var reader = new BsonReader(ms);
+            using var reader = new BsonDataReader(ms);
             var serializer = new JsonSerializer();
             return serializer.Deserialize<T>(reader);
         }
         public static byte[] Serialize<T>(this T value)
         {
             using var ms = new MemoryStream();
-            using var writer = new BsonWriter(ms);
+            using var writer = new BsonDataWriter(ms);
             var serializer = new JsonSerializer();
             serializer.Serialize(writer, value);
             return ms.ToArray();

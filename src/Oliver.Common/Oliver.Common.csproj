@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.0" />
+    <PackageReference Include="WarnAboutTODOs" Version="1.6.0" />
   </ItemGroup>
 
 </Project>

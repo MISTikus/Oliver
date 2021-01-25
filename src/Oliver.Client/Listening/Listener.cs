@@ -62,6 +62,6 @@ namespace Oliver.Client.Listening
             this.logger.LogInformation("Stop listening...");
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken) { }
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }

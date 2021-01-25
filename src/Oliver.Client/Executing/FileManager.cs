@@ -8,7 +8,7 @@ namespace Oliver.Client.Executing
 {
     public class FileManager : IFileManager
     {
-        public async Task<(bool isSuccessed, string[] logs)> UnpackArchive(string folder, Common.Models.File file)
+        public Task<(bool isSuccessed, string[] logs)> UnpackArchive(string folder, Common.Models.File file)
         {
             var logs = new List<string>
             {
@@ -23,7 +23,7 @@ namespace Oliver.Client.Executing
 
                 logs.Add($"{file.FileName} unpacked.");
 
-                return (true, logs.ToArray());
+                return Task.FromResult<(bool isSuccessed, string[] logs)>((true, logs.ToArray()));
             }
             catch (Exception e)
             {
@@ -31,7 +31,7 @@ namespace Oliver.Client.Executing
                 logs.Add(e.Message);
                 logs.Add(e.StackTrace);
                 // ToDo: add inner exceptions to logs
-                return (false, logs.ToArray());
+                return Task.FromResult<(bool isSuccessed, string[] logs)>((false, logs.ToArray()));
             }
         }
     }

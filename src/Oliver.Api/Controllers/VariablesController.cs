@@ -15,58 +15,58 @@ namespace Oliver.Api.Controllers
         public VariablesController(Func<ILiteDatabase> databaseFactory) => this.databaseFactory = databaseFactory;
 
         [HttpGet("{tenant}/{environment}")]
-        public async Task<ActionResult<VariableSet>> Get([FromRoute]string tenant, [FromRoute]string environemnt)
+        public Task<ActionResult> Get([FromRoute] string tenant, [FromRoute] string environemnt)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();
             var variables = collection.FindOne(x => x.Instance.Tenant == tenant && x.Instance.Environment == environemnt);
             return variables is null
-                ? NotFound() as ActionResult
-                : Ok(variables);
+                ? Task.FromResult<ActionResult>(NotFound())
+                : Task.FromResult<ActionResult>(Ok(variables));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<VariableSet>> Get([FromRoute]long id)
+        public Task<ActionResult> Get([FromRoute] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();
             var variables = collection.FindById(id);
             return variables is null
-                ? NotFound() as ActionResult
-                : Ok(variables);
+                ? Task.FromResult<ActionResult>(NotFound())
+                : Task.FromResult<ActionResult>(Ok(variables));
         }
 
         [HttpPost]
-        public async Task<ActionResult<long>> Add([FromBody]VariableSet variables)
+        public Task<ActionResult<long>> Add([FromBody] VariableSet variables)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();
             collection.Insert(variables);
-            return Ok(variables.Id);
+            return Task.FromResult<ActionResult<long>>(Ok(variables.Id));
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update([FromQuery]long id, [FromBody]VariableSet variables)
+        public Task<IActionResult> Update([FromQuery] long id, [FromBody] VariableSet variables)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();
             var existing = collection.FindById(id);
             if (existing is null)
-                return NotFound();
+                return Task.FromResult<IActionResult>(NotFound());
             collection.Update(variables);
-            return Ok();
+            return Task.FromResult<IActionResult>(Ok());
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Remove([FromQuery]long id)
+        public Task<IActionResult> Remove([FromQuery] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();
             var existing = collection.FindById(id);
             if (existing is null)
-                return NotFound();
+                return Task.FromResult<IActionResult>(NotFound());
             collection.Delete(id);
-            return Ok();
+            return Task.FromResult<IActionResult>(Ok());
         }
     }
 }

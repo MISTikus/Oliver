@@ -10,6 +10,6 @@ namespace Oliver.Api.Controllers
     {
         [HttpGet("health")]
         [AllowAnonymous]
-        public async Task<IActionResult> HealthCheck() => Ok("Healthy");
+        public Task<IActionResult> HealthCheck() => Task.FromResult<IActionResult>(Ok("Healthy"));
     }
 }

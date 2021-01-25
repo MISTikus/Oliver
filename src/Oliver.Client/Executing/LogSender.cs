@@ -26,7 +26,7 @@ namespace Oliver.Client.Executing
             Task.Run(QueueListener, this.cancellation.Token);
         }
 
-        public async Task LogStep(long executionId, int stepId, bool isLastStep = false, List<string> logs = null, CancellationToken cancellationToken = default)
+        public Task LogStep(long executionId, int stepId, bool isLastStep = false, List<string> logs = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.Register(() => this.cancellation.Cancel());
 
@@ -49,9 +49,10 @@ namespace Oliver.Client.Executing
 
             this.logger.LogInformation($"ExecutionId: {executionId};\nStepId: {stepId}");
             this.logger.LogInformation(string.Join('\n', logs));
+            return Task.CompletedTask;
         }
 
-        public async Task LogError(long executionId, string message, int stepId = 0, bool isLastStep = false, Exception error = null, List<string> logs = null, CancellationToken cancellationToken = default)
+        public Task LogError(long executionId, string message, int stepId = 0, bool isLastStep = false, Exception error = null, List<string> logs = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.Register(() => this.cancellation.Cancel());
 
@@ -77,6 +78,7 @@ namespace Oliver.Client.Executing
             });
 
             this.logger.LogWarning(error, $"{message}\nExecutionId: {executionId};\nStepId: {stepId}");
+            return Task.CompletedTask;
         }
 
         private async Task QueueListener()

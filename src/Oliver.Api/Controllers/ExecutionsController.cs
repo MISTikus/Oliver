@@ -29,7 +29,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpGet("{tenant}/{environment}/check")]
-        public async Task<ActionResult<long>> CheckForExecution([FromRoute]string tenant, [FromRoute]string environment, CancellationToken cancellation)
+        public async Task<ActionResult<long>> CheckForExecution([FromRoute] string tenant, [FromRoute] string environment, CancellationToken cancellation)
         {
             var instance = new Instance(tenant, environment);
 
@@ -55,19 +55,19 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Execution>> GetExecution([FromRoute]long id)
+        public Task<ActionResult> GetExecution([FromRoute] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Execution>();
             var execution = collection.FindById(id);
             return execution is null
-                ? NotFound() as ActionResult
-                : Ok(execution);
+                ? Task.FromResult<ActionResult>(NotFound())
+                : Task.FromResult<ActionResult>(Ok(execution));
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> AddExecutionStepLog([FromRoute]long id, [FromBody]Execution.StepState stepState,
-            [FromQuery]Execution.ExecutionState? result)
+        public async Task<IActionResult> AddExecutionStepLog([FromRoute] long id, [FromBody] Execution.StepState stepState,
+            [FromQuery] Execution.ExecutionState? result)
         {
             this.logger.LogInformation("Received execution step log.");
             this.logger.LogInformation($"ExecutionId: '{id}'. Result: {result}.");
@@ -112,7 +112,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<long>> AddExecution([FromBody]Execution execution)
+        public Task<ActionResult<long>> AddExecution([FromBody] Execution execution)
         {
             lock (locker)
             {
@@ -140,7 +140,7 @@ namespace Oliver.Api.Controllers
             session.Enqueue(new ValueTuple<long>(execution.Id).Serialize());
             session.Flush();
 
-            return Ok(execution.Id);
+            return Task.FromResult<ActionResult<long>>(Ok(execution.Id));
         }
     }
 }
