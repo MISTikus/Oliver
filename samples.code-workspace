@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "./samples"
+		}
+	],
+	"settings": {
+		"rest-client.environmentVariables": {
+			"$shared": {},
+			"debug": {
+				"host": "https://localhost:5001"
+			}
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"humao.rest-client"
+		]
+	}
+}

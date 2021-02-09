@@ -1,6 +1,3 @@
-### Variables
-@host = https://localhost:5001
-
 ### Add Template
 POST {{host}}/api/templates
 Content-Type: application/json
