@@ -13,7 +13,7 @@ namespace Oliver.Common.Models
             public string Name { get; set; }
             public StepType Type { get; set; }
             public string Command { get; set; }
-            public string WorkingFolder { get; set; }
+            public string WorkingFolder { get; set; } = "";
             public string FileName { get; set; }
         }
 

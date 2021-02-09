@@ -17,9 +17,9 @@ namespace Oliver.Client.Executing
 
             try
             {
-                using var stream = new MemoryStream(file.Body);
+                using var stream = new MemoryStream(file.Body.ToArray());
                 using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
-                archive.ExtractToDirectory(folder);
+                archive.ExtractToDirectory(folder, true);
 
                 logs.Add($"{file.FileName} unpacked.");
 

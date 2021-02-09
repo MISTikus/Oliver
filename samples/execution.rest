@@ -1,4 +1,5 @@
 ### Add Template
+# @name add
 POST {{host}}/api/exec
 Content-Type: application/json
 
@@ -9,3 +10,6 @@ Content-Type: application/json
         "environment": "Prod"
     }
 }
+
+### Get Execution
+GET {{host}}/api/exec/{{add.response.body.*}}

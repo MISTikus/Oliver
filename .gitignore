@@ -38,3 +38,5 @@ packages/
 *.orig
 #StorageDb
 /**/fileStorage/
+#Debug WorkFolder
+/workFolder/**

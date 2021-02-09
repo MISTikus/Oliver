@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Oliver.Api.Services;
 using Oliver.Common.Models;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Oliver.Api.Controllers
@@ -72,7 +73,7 @@ namespace Oliver.Api.Controllers
                 return NotFound();
 
             using var storage = this.storageFactory();
-            file.Body = await storage.Read(file.FileName, file.Version);
+            file.Body = new List<byte>(await storage.Read(file.FileName, file.Version));
 
             return file.Body is null
                 ? (IActionResult)NotFound()

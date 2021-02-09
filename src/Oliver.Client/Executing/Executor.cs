@@ -63,8 +63,14 @@ namespace Oliver.Client.Executing
                 var logs = new List<string> { $"Starting step {step.Order}: '{step.Name}'" };
 
                 var command = Substitute(step.Command, variables?.Values);
-                var folder = Substitute(step.WorkingFolder, variables?.Values);
+
+                var folder = Substitute(step.WorkingFolder ?? "", variables?.Values);
                 folder = Path.GetFullPath(folder, Path.GetFullPath(this.instanceOptions?.Value?.DefaultFolder ?? "."));
+                if (!Directory.Exists(folder))
+                {
+                    Directory.CreateDirectory(folder);
+                    logs.Add($"Folder: '{folder}' created.");
+                }
                 logs.Add($"Executing at folder: '{folder}'");
 
                 Common.Models.File file;
