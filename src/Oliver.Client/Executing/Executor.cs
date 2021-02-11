@@ -144,7 +144,7 @@ namespace Oliver.Client.Executing
 
         private async Task<Common.Models.File> GetArchiveAsync(string fileName, string version = null, CancellationToken cancellationToken = default)
         {
-            var request = new RestRequest($"api/packages/{fileName}"
+            var request = new RestRequest($"api/v1/packages/{fileName}"
                 + (string.IsNullOrWhiteSpace(version) ? "" : $"?version={version}"));
             var response = await this.restClient.ExecuteAsync<Common.Models.File>(request, cancellationToken: cancellationToken);
             if (response.StatusCode == HttpStatusCode.OK)
