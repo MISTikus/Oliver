@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Oliver.Api.Configurations;
 using Oliver.Api.Extensions;
@@ -67,7 +68,9 @@ namespace Oliver.Api
                 ;
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app,
+            IWebHostEnvironment env,
+            ILoggerFactory logFactory)
         {
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
@@ -78,6 +81,8 @@ namespace Oliver.Api
                 c.RoutePrefix = "api/metadata";
                 c.SwaggerEndpoint("v1/swagger.json", "API");
             });
+
+            logFactory.AddFile(".\\logs\\server.log", LogLevel.Trace);
 
             app.UseHttpsRedirection()
                 .UseRouting()

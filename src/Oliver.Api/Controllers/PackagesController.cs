@@ -1,6 +1,7 @@
 ﻿using LiteDB;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Oliver.Api.Services;
 using Oliver.Common.Models;
 using System;
@@ -16,18 +17,23 @@ namespace Oliver.Api.Controllers
     {
         private readonly Func<ILiteDatabase> databaseFactory;
         private readonly Func<IBlobStorage> storageFactory;
+        private readonly ILogger<PackagesController> logger;
 
-        public PackagesController(Func<ILiteDatabase> databaseFactory, Func<IBlobStorage> storageFactory)
+        public PackagesController(Func<ILiteDatabase> databaseFactory,
+            Func<IBlobStorage> storageFactory,
+            ILogger<PackagesController> logger)
         {
             this.databaseFactory = databaseFactory;
             this.storageFactory = storageFactory;
+            this.logger = logger;
         }
 
         [HttpPost]
         public async Task<ActionResult<long>> AddFile([FromForm] FileRequest request)
         {
+            this.logger.Log(LogLevel.Information, new EventId(), request, null, (s, e) => $"Received: {s.Version}. {s.Body.FileName}:{s.Body.Length}");
             if (request is null || request.Body is null)
-                return BadRequest();
+                return BadRequest("Empty request or body");
 
             var formFile = request.Body;
 
