@@ -1,6 +1,5 @@
 ﻿using DiskQueue;
 using LiteDB;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Oliver.Api.Extensions;
@@ -13,7 +12,8 @@ using System.Threading.Tasks;
 namespace Oliver.Api.Controllers
 {
     [ApiController]
-    [Route("api/exec")]
+    [Route("api/v{version:apiVersion}/exec")]
+    [ApiVersion("1")]
     public class ExecutionsController : ControllerBase
     {
         private readonly Func<Instance, IPersistentQueue> queueFactory;
@@ -56,15 +56,13 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Execution))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetExecution([FromRoute] long id)
+        public ActionResult<Execution> GetExecution([FromRoute] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Execution>();
             var execution = collection.FindById(id);
             return execution is null
-                ? (IActionResult)NotFound()
+                ? NotFound()
                 : Ok(execution);
         }
 

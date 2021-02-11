@@ -1,5 +1,4 @@
 ﻿using LiteDB;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Oliver.Common.Models;
 using System;
@@ -7,7 +6,8 @@ using System;
 namespace Oliver.Api.Controllers
 {
     [ApiController]
-    [Route("api/templates")]
+    [Route("api/v{version:apiVersion}/templates")]
+    [ApiVersion("1")]
     public class TemplatesController : ControllerBase
     {
         private readonly Func<ILiteDatabase> databaseFactory;
@@ -15,15 +15,13 @@ namespace Oliver.Api.Controllers
         public TemplatesController(Func<ILiteDatabase> databaseFactory) => this.databaseFactory = databaseFactory;
 
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Template))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetTemplate([FromRoute] long id)
+        public ActionResult<Template> GetTemplate([FromRoute] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Template>();
             var template = collection.FindById(id);
             return template is null
-                ? (IActionResult)NotFound()
+                ? NotFound()
                 : Ok(template);
         }
 

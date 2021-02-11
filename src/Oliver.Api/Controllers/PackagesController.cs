@@ -10,7 +10,8 @@ using System.Threading.Tasks;
 namespace Oliver.Api.Controllers
 {
     [ApiController]
-    [Route("api/packages")]
+    [Route("api/v{version:apiVersion}/packages")]
+    [ApiVersion("1")]
     public class PackagesController : ControllerBase
     {
         private readonly Func<ILiteDatabase> databaseFactory;
@@ -47,9 +48,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpGet("{fileName}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(File))]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> GetFile([FromRoute] string fileName, [FromQuery] string version)
+        public async Task<ActionResult<File>> GetFile([FromRoute] string fileName, [FromQuery] string version)
         {
             if (string.IsNullOrWhiteSpace(fileName))
                 return BadRequest();
@@ -77,7 +76,7 @@ namespace Oliver.Api.Controllers
             file.Body = new List<byte>(await storage.ReadAsync(file.FileName, file.Version));
 
             return file.Body is null
-                ? (IActionResult)NotFound()
+                ? NotFound()
                 : Ok(file);
         }
 
