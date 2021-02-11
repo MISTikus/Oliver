@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Oliver.Api.Controllers
 {
     [ApiController]
-    [Route("api/v{version:apiVersion}/exec")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1")]
     public class ExecutionsController : ControllerBase
     {

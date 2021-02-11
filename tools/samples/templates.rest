@@ -1,5 +1,5 @@
 ### Add Template
-POST {{host}}/api/templates
+POST {{host}}/api/{{version}}/templates
 Content-Type: application/json
 
 {

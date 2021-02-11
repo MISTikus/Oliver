@@ -1,6 +1,6 @@
 ### Add Template
 # @name add
-POST {{host}}/api/exec
+POST {{host}}/api/{{version}}/executions
 Content-Type: application/json
 
 {
@@ -12,4 +12,4 @@ Content-Type: application/json
 }
 
 ### Get Execution
-GET {{host}}/api/exec/{{add.response.body.*}}
+GET {{host}}/api/{{version}}/executions/{{add.response.body.*}}

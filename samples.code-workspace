@@ -8,7 +8,8 @@
 		"rest-client.environmentVariables": {
 			"$shared": {},
 			"debug": {
-				"host": "https://localhost:5001"
+				"host": "https://localhost:5001",
+				"version": "v1"
 			}
 		}
 	},

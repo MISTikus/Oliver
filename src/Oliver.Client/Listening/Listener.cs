@@ -37,7 +37,7 @@ namespace Oliver.Client.Listening
                     var instance = options.Instances[i];
                     tasks[i] = Task.Run(async () =>
                     {
-                        var request = new RestRequest($"api/exec/{instance.Tenant}/{instance.Environment}/check")
+                        var request = new RestRequest($"api/v1/executions/{instance.Tenant}/{instance.Environment}/check")
                         {
                             Timeout = 10 * 60 * 1000
                         };
@@ -54,10 +54,10 @@ namespace Oliver.Client.Listening
                                 $"Response status code: {response.StatusCode}.\n" +
                                 $"Response: {response.Content}");
                         }
-                    });
+                    }, cancellationToken);
                 }
                 await Task.WhenAll(tasks);
-                await Task.Delay(3000);
+                await Task.Delay(3000, cancellationToken);
             }
             this.logger.LogInformation("Stop listening...");
         }

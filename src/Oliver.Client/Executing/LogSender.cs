@@ -32,7 +32,7 @@ namespace Oliver.Client.Executing
 
             this.queue.Enqueue(async () =>
             {
-                var request = new RestRequest($"api/exec/{executionId}", Method.PUT);
+                var request = new RestRequest($"api/v1/executions/{executionId}", Method.PUT);
 
                 if (isLastStep)
                     request.AddParameter("result", Execution.ExecutionState.Successed, ParameterType.QueryString);
@@ -58,7 +58,7 @@ namespace Oliver.Client.Executing
 
             this.queue.Enqueue(async () =>
             {
-                var request = new RestRequest($"api/exec/{executionId}", Method.PUT);
+                var request = new RestRequest($"api/v1/executions/{executionId}", Method.PUT);
 
                 if (isLastStep)
                     request.AddParameter("result", Execution.ExecutionState.Failed, ParameterType.QueryString);

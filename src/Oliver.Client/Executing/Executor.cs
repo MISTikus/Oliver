@@ -102,7 +102,8 @@ namespace Oliver.Client.Executing
 
         private async Task<Execution> GetExecutionAsync(long executionId, CancellationToken cancellationToken)
         {
-            var request = new RestRequest($"api/exec/{executionId}");
+            // ToDo: move version to constant
+            var request = new RestRequest($"api/v1/executions/{executionId}");
             var response = await this.restClient.ExecuteAsync<Execution>(request, cancellationToken: cancellationToken);
             if (response.StatusCode == HttpStatusCode.OK)
                 return response.Data;
@@ -114,7 +115,7 @@ namespace Oliver.Client.Executing
 
         private async Task<Template> GetTemplateAsync(long templateId, CancellationToken cancellationToken)
         {
-            var request = new RestRequest($"api/templates/{templateId}");
+            var request = new RestRequest($"api/v1/templates/{templateId}");
             var response = await this.restClient.ExecuteAsync<Template>(request, cancellationToken: cancellationToken);
             if (response.StatusCode == HttpStatusCode.OK)
                 return response.Data;
@@ -126,7 +127,7 @@ namespace Oliver.Client.Executing
 
         private async Task<VariableSet> GetVariablesAsync(long variableSetId, Dictionary<string, string> overrides, CancellationToken cancellationToken)
         {
-            var request = new RestRequest($"api/variables/{variableSetId}");
+            var request = new RestRequest($"api/v1/variables/{variableSetId}");
             var response = await this.restClient.ExecuteAsync<VariableSet>(request, cancellationToken: cancellationToken);
             if (response.StatusCode == HttpStatusCode.OK)
             {

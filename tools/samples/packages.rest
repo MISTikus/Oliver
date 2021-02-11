@@ -1,5 +1,5 @@
 ### Add File
-POST {{host}}/api/packages
+POST {{host}}/api/{{version}}/packages
 Content-Type: multipart/form-data; boundary=package
 
 --package
@@ -15,4 +15,4 @@ Content-Type: application/zip
 
 
 ### Get file by name
-GET {{host}}/api/packages/somefile.zip
+GET {{host}}/api/{{version}}/packages/somefile.zip

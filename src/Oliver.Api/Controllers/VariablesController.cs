@@ -6,7 +6,7 @@ using System;
 namespace Oliver.Api.Controllers
 {
     [ApiController]
-    [Route("api/v{version:apiVersion}/variables")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiVersion("1")]
     public class VariablesController : ControllerBase
     {
