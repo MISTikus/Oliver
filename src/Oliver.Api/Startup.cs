@@ -24,14 +24,15 @@ namespace Oliver.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            var storageOptions = Configuration.GetOptions<QueueStorage>();
+            var storageOptions = Configuration.GetOptions<Storage>();
             var dbOptions = Configuration.GetOptions<Database>();
 
             services
                 .AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" }))
-                .AddSingleton(s => QueueFactory(storageOptions))
+                .AddSingleton(s => QueueFactory(storageOptions.QueuesFolder))
                 .AddSingleton(s => DbFactory(dbOptions))
-                .AddTransient<Func<IBlobStorage>>(c => () => new FileSystemStorage(".\\fileStorage"))
+                .AddSingleton<IBlobStorage>(c => new FileSystemStorage(storageOptions.BlobFolder))
+                .AddSingleton<Func<IBlobStorage>>(c => () => c.GetRequiredService<IBlobStorage>())
                 .AddControllers()
                 .AddJsonOptions(options =>
                 {
@@ -58,8 +59,8 @@ namespace Oliver.Api
                 .UseEndpoints(endpoints => endpoints.MapControllers())
             ;
         }
-        private Func<Instance, IPersistentQueue> QueueFactory(QueueStorage options) =>
-            instance => new PersistentQueue(Path.Combine(options.Folder, instance.Tenant, instance.Environment));
+        private Func<Instance, IPersistentQueue> QueueFactory(string dataStorageFolder) =>
+            instance => new PersistentQueue(Path.Combine(dataStorageFolder, instance.Tenant, instance.Environment));
 
         private Func<ILiteDatabase> DbFactory(Database options) => () => new LiteDatabase(options.Path);
     }

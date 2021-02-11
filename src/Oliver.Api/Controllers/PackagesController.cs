@@ -61,8 +61,7 @@ namespace Oliver.Api.Controllers
                 var latest = collection.Query()
                     .Where(f => f.FileName == fileName)
                     .OrderBy(f => f.Version, Query.Descending)
-                    .Limit(1)
-                    .SingleOrDefault();
+                    .FirstOrDefault();
                 if (latest is { })
                     file = latest;
             }
