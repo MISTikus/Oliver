@@ -23,7 +23,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddFile([FromForm] FileRequest request)
+        public async Task<ActionResult<long>> AddFile([FromForm] FileRequest request)
         {
             if (request is null || request.Body is null)
                 return BadRequest();
