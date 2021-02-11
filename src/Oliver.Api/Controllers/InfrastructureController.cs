@@ -9,6 +9,6 @@ namespace Oliver.Api.Controllers
     {
         [HttpGet("health")]
         [AllowAnonymous]
-        public IActionResult HealthCheck() => Ok("Healthy");
+        public ActionResult<string> HealthCheck() => Ok("Healthy");
     }
 }

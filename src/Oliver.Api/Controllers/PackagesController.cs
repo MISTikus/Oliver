@@ -47,6 +47,8 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpGet("{fileName}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(File))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetFile([FromRoute] string fileName, [FromQuery] string version)
         {
             if (string.IsNullOrWhiteSpace(fileName))
