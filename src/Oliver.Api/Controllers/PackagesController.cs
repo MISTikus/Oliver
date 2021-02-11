@@ -41,7 +41,7 @@ namespace Oliver.Api.Controllers
                 collection.Update(file);
 
             using var storage = this.storageFactory();
-            await storage.Save(file.FileName, file.Version, formFile);
+            await storage.SaveAsync(file.FileName, file.Version, formFile);
 
             return Ok(file.Id);
         }
@@ -72,7 +72,7 @@ namespace Oliver.Api.Controllers
                 return NotFound();
 
             using var storage = this.storageFactory();
-            file.Body = new List<byte>(await storage.Read(file.FileName, file.Version));
+            file.Body = new List<byte>(await storage.ReadAsync(file.FileName, file.Version));
 
             return file.Body is null
                 ? (IActionResult)NotFound()

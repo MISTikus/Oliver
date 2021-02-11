@@ -11,7 +11,7 @@ namespace Oliver.Api.Services
 
         public FileSystemStorage(string storageFolder) => this.storageFolder = storageFolder;
 
-        public async Task Save(string fileName, string version, IFormFile formFile)
+        public async Task SaveAsync(string fileName, string version, IFormFile formFile)
         {
             var folder = Path.Combine(this.storageFolder, fileName.Replace(".", "_"), version);
 
@@ -24,12 +24,12 @@ namespace Oliver.Api.Services
             await formFile.CopyToAsync(fileStream);
         }
 
-        public Task<byte[]> Read(string fileName, string version)
+        public async Task<byte[]> ReadAsync(string fileName, string version)
         {
             var folder = fileName.Replace(".", "_");
             var filePath = Path.Combine(this.storageFolder, folder, version, fileName);
             return File.Exists(filePath)
-                ? File.ReadAllBytesAsync(filePath)
+                ? await File.ReadAllBytesAsync(filePath)
                 : null;
         }
 
@@ -39,7 +39,7 @@ namespace Oliver.Api.Services
 
     public interface IBlobStorage : IDisposable
     {
-        Task Save(string fileName, string version, IFormFile formFile);
-        Task<byte[]> Read(string fileName, string version);
+        Task SaveAsync(string fileName, string version, IFormFile formFile);
+        Task<byte[]> ReadAsync(string fileName, string version);
     }
 }

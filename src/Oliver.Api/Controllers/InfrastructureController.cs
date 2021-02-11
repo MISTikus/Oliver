@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace Oliver.Api.Controllers
 {
@@ -10,6 +9,6 @@ namespace Oliver.Api.Controllers
     {
         [HttpGet("health")]
         [AllowAnonymous]
-        public Task<IActionResult> HealthCheck() => Task.FromResult<IActionResult>(Ok("Healthy"));
+        public IActionResult HealthCheck() => Ok("Healthy");
     }
 }

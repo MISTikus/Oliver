@@ -1,5 +1,6 @@
 ﻿using DiskQueue;
 using LiteDB;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Oliver.Api.Extensions;
@@ -55,14 +56,16 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        public Task<ActionResult> GetExecution([FromRoute] long id)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Execution))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult GetExecution([FromRoute] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Execution>();
             var execution = collection.FindById(id);
             return execution is null
-                ? Task.FromResult<ActionResult>(NotFound())
-                : Task.FromResult<ActionResult>(Ok(execution));
+                ? (IActionResult)NotFound()
+                : Ok(execution);
         }
 
         [HttpPut("{id}")]
@@ -112,7 +115,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpPost]
-        public Task<ActionResult<long>> AddExecution([FromBody] Execution execution)
+        public ActionResult<long> AddExecution([FromBody] Execution execution)
         {
             lock (locker)
             {
@@ -140,7 +143,7 @@ namespace Oliver.Api.Controllers
             session.Enqueue(new ValueTuple<long>(execution.Id).Serialize());
             session.Flush();
 
-            return Task.FromResult<ActionResult<long>>(Ok(execution.Id));
+            return Ok(execution.Id);
         }
     }
 }

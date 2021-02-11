@@ -46,7 +46,7 @@ namespace Oliver.Client.Listening
                         if (response.StatusCode == HttpStatusCode.OK)
                         {
                             var executor = this.executorFactory();
-                            await executor.Execute(instance, response.Data, cancellationToken).ConfigureAwait(false);
+                            await executor.ExecuteAsync(instance, response.Data, cancellationToken).ConfigureAwait(false);
                         }
                         else
                         {

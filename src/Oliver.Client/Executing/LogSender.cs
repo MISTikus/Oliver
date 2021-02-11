@@ -23,7 +23,7 @@ namespace Oliver.Client.Executing
             this.logger = logger;
             this.queue = new ConcurrentQueue<Action>();
             this.cancellation = new CancellationTokenSource();
-            Task.Run(QueueListener, this.cancellation.Token);
+            Task.Run(QueueListenerAsync, this.cancellation.Token);
         }
 
         public Task LogStep(long executionId, int stepId, bool isLastStep = false, List<string> logs = null, CancellationToken cancellationToken = default)
@@ -81,7 +81,7 @@ namespace Oliver.Client.Executing
             return Task.CompletedTask;
         }
 
-        private async Task QueueListener()
+        private async Task QueueListenerAsync()
         {
             while (!this.cancellation.IsCancellationRequested)
             {

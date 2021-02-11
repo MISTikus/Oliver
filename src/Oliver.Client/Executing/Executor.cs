@@ -33,12 +33,12 @@ namespace Oliver.Client.Executing
             this.logSender = logSender;
         }
 
-        public async Task Execute(Configurations.Client.Instance instance, long executionId, CancellationToken cancellationToken)
+        public async Task ExecuteAsync(Configurations.Client.Instance instance, long executionId, CancellationToken cancellationToken)
         {
             try
             {
-                var execution = await GetExecution(executionId, cancellationToken).ConfigureAwait(false);
-                await Execute(instance, execution, cancellationToken);
+                var execution = await GetExecutionAsync(executionId, cancellationToken).ConfigureAwait(false);
+                await ExecuteAsync(instance, execution, cancellationToken);
             }
             catch (Exception e)
             {
@@ -46,12 +46,12 @@ namespace Oliver.Client.Executing
             }
         }
 
-        private async Task Execute(Configurations.Client.Instance instance, Execution execution, CancellationToken cancellationToken)
+        private async Task ExecuteAsync(Configurations.Client.Instance instance, Execution execution, CancellationToken cancellationToken)
         {
-            var template = await GetTemplate(execution.TemplateId, cancellationToken);
+            var template = await GetTemplateAsync(execution.TemplateId, cancellationToken);
             var variables = execution.VariableSetId == default
                 ? null
-                : await GetVariables(execution.VariableSetId, execution.VariableOverrides, cancellationToken);
+                : await GetVariablesAsync(execution.VariableSetId, execution.VariableOverrides, cancellationToken);
 
             // Builtin variables
             variables?.Values.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
@@ -64,7 +64,7 @@ namespace Oliver.Client.Executing
 
                 var command = Substitute(step.Command, variables?.Values);
 
-                var folder = Substitute(step.WorkingFolder ?? "", variables?.Values);
+                var folder = Substitute(step.WorkingFolder, variables?.Values);
                 folder = Path.GetFullPath(folder, Path.GetFullPath(this.instanceOptions?.Value?.DefaultFolder ?? "."));
                 if (!Directory.Exists(folder))
                 {
@@ -76,12 +76,12 @@ namespace Oliver.Client.Executing
                 Common.Models.File file;
                 var result = step.Type switch
                 {
-                    Template.StepType.Archive when (file = await GetArchive(step.FileName)) is { }
-                        => await this.fileManager.UnpackArchive(folder, file),
-                    Template.StepType.CMD => await this.runner.RunCMD(folder, command),
-                    Template.StepType.PShell => await this.runner.RunPowerShell(folder, command),
-                    Template.StepType.Docker => await this.runner.RunDocker(folder, command),
-                    Template.StepType.DockerCompose => await this.runner.RunCompose(folder, command),
+                    Template.StepType.Archive when (file = await GetArchiveAsync(step.FileName)) is { }
+                        => this.fileManager.UnpackArchive(folder, file),
+                    Template.StepType.CMD => await this.runner.RunCMDAsync(folder, command),
+                    Template.StepType.PShell => await this.runner.RunPowerShellAsync(folder, command),
+                    Template.StepType.Docker => await this.runner.RunDockerAsync(folder, command),
+                    Template.StepType.DockerCompose => await this.runner.RunComposeAsync(folder, command),
                     _ => throw new NotImplementedException(),
                 };
 
@@ -100,7 +100,7 @@ namespace Oliver.Client.Executing
             }
         }
 
-        private async Task<Execution> GetExecution(long executionId, CancellationToken cancellationToken)
+        private async Task<Execution> GetExecutionAsync(long executionId, CancellationToken cancellationToken)
         {
             var request = new RestRequest($"api/exec/{executionId}");
             var response = await this.restClient.ExecuteAsync<Execution>(request, cancellationToken: cancellationToken);
@@ -112,7 +112,7 @@ namespace Oliver.Client.Executing
             return default;
         }
 
-        private async Task<Template> GetTemplate(long templateId, CancellationToken cancellationToken)
+        private async Task<Template> GetTemplateAsync(long templateId, CancellationToken cancellationToken)
         {
             var request = new RestRequest($"api/templates/{templateId}");
             var response = await this.restClient.ExecuteAsync<Template>(request, cancellationToken: cancellationToken);
@@ -124,7 +124,7 @@ namespace Oliver.Client.Executing
             return default;
         }
 
-        private async Task<VariableSet> GetVariables(long variableSetId, Dictionary<string, string> overrides, CancellationToken cancellationToken)
+        private async Task<VariableSet> GetVariablesAsync(long variableSetId, Dictionary<string, string> overrides, CancellationToken cancellationToken)
         {
             var request = new RestRequest($"api/variables/{variableSetId}");
             var response = await this.restClient.ExecuteAsync<VariableSet>(request, cancellationToken: cancellationToken);
@@ -141,7 +141,7 @@ namespace Oliver.Client.Executing
             return default;
         }
 
-        private async Task<Common.Models.File> GetArchive(string fileName, string version = null, CancellationToken cancellationToken = default)
+        private async Task<Common.Models.File> GetArchiveAsync(string fileName, string version = null, CancellationToken cancellationToken = default)
         {
             var request = new RestRequest($"api/packages/{fileName}"
                 + (string.IsNullOrWhiteSpace(version) ? "" : $"?version={version}"));
