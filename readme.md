@@ -23,7 +23,7 @@ Deploy management app
 ### Server features
 
 - Logging deployment process
-  - [ ] View deploing log through API request
+  - [x] View deploing log through API request
 - Configuration/Variables
   - [ ] Common variables
   - [x] Template variables
