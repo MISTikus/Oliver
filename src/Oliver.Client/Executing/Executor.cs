@@ -73,7 +73,7 @@ namespace Oliver.Client.Executing
                 logs.Add($"Executing at folder: '{folder}'");
                 var result = step.Type switch
                 {
-                    Template.StepType.Archive => await UnpackArchive(step.FileName, folder),
+                    Template.StepType.Archive => await UnpackArchiveAsync(step.FileName, folder),
                     Template.StepType.CMD => await this.runner.RunCMDAsync(folder, command),
                     Template.StepType.PShell => await this.runner.RunPowerShellAsync(folder, command),
                     Template.StepType.Docker => await this.runner.RunDockerAsync(folder, command),
@@ -96,7 +96,7 @@ namespace Oliver.Client.Executing
             }
         }
 
-        private async Task<(bool isSuccessed, string[] logs)> UnpackArchive(string fileName, string folder)
+        private async Task<(bool isSuccessed, string[] logs)> UnpackArchiveAsync(string fileName, string folder)
         {
             var file = await this.apiClient.GetArchiveAsync(fileName);
             if (file is null)
