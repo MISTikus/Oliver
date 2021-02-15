@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Oliver.Client.Services;
 using Oliver.Common.Models;
-using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,18 +13,18 @@ namespace Oliver.Client.Executing
 {
     internal class Executor : IExecutor
     {
-        private readonly IRestClient restClient;
+        private readonly IApiClient apiClient;
         private readonly IOptions<Configurations.Client> instanceOptions;
         private readonly ILogger<Executor> logger;
         private readonly IRunner runner;
         private readonly IFileManager fileManager;
         private readonly ILogSender logSender;
 
-        public Executor(IRestClient restClient, IOptions<Configurations.Client> instanceOptions,
+        public Executor(IApiClient apiClient, IOptions<Configurations.Client> instanceOptions,
             IRunner runner, IFileManager fileManager,
             ILogSender logSender, ILogger<Executor> logger)
         {
-            this.restClient = restClient;
+            this.apiClient = apiClient;
             this.instanceOptions = instanceOptions;
             this.logger = logger;
             this.runner = runner;
@@ -37,7 +36,7 @@ namespace Oliver.Client.Executing
         {
             try
             {
-                var execution = await GetExecutionAsync(executionId, cancellationToken).ConfigureAwait(false);
+                var execution = await this.apiClient.GetExecutionAsync(executionId, cancellationToken).ConfigureAwait(false);
                 await ExecuteAsync(instance, execution, cancellationToken);
             }
             catch (Exception e)
@@ -48,7 +47,7 @@ namespace Oliver.Client.Executing
 
         private async Task ExecuteAsync(Configurations.Client.Instance instance, Execution execution, CancellationToken cancellationToken)
         {
-            var template = await GetTemplateAsync(execution.TemplateId, cancellationToken);
+            var template = await this.apiClient.GetTemplateAsync(execution.TemplateId, cancellationToken);
             var variables = execution.VariableSetId == default
                 ? null
                 : await GetVariablesAsync(execution.VariableSetId, execution.VariableOverrides, cancellationToken);
@@ -72,12 +71,9 @@ namespace Oliver.Client.Executing
                     logs.Add($"Folder: '{folder}' created.");
                 }
                 logs.Add($"Executing at folder: '{folder}'");
-
-                Common.Models.File file;
                 var result = step.Type switch
                 {
-                    Template.StepType.Archive when (file = await GetArchiveAsync(step.FileName)) is { }
-                        => this.fileManager.UnpackArchive(folder, file),
+                    Template.StepType.Archive => await UnpackArchive(step.FileName, folder),
                     Template.StepType.CMD => await this.runner.RunCMDAsync(folder, command),
                     Template.StepType.PShell => await this.runner.RunPowerShellAsync(folder, command),
                     Template.StepType.Docker => await this.runner.RunDockerAsync(folder, command),
@@ -85,77 +81,42 @@ namespace Oliver.Client.Executing
                     _ => throw new NotImplementedException(),
                 };
 
-                if (!result.isSuccessed)
+                if (result.isSuccessed)
+                    logs.AddRange(result.logs);
+                else
                 {
                     await this.logSender.LogError(execution.Id, $"Step '{step.Name}' failed.", step.Order, true, logs: result.logs.ToList(), cancellationToken: cancellationToken);
                     break;
                 }
-                else
-                    logs.AddRange(result.logs);
 
                 logs.Add($"Step {step.Order} - '{step.Name}' finished");
 
-                await this.logSender.LogStep(execution.Id, step.Order, i == template.Steps.Count, logs, cancellationToken: cancellationToken);
+                await this.logSender.LogStep(execution.Id, step.Order, i == template.Steps.Count + 1, logs, cancellationToken: cancellationToken);
                 i++;
             }
         }
 
-        private async Task<Execution> GetExecutionAsync(long executionId, CancellationToken cancellationToken)
+        private async Task<(bool isSuccessed, string[] logs)> UnpackArchive(string fileName, string folder)
         {
-            // ToDo: move version to constant
-            var request = new RestRequest($"api/v1/executions/{executionId}");
-            var response = await this.restClient.ExecuteAsync<Execution>(request, cancellationToken: cancellationToken);
-            if (response.StatusCode == HttpStatusCode.OK)
-                return response.Data;
-
-            this.logger.LogWarning($"Getting execution. Response status code: {response.StatusCode}.\n" +
-                $"Response: {response.Content}");
-            return default;
-        }
-
-        private async Task<Template> GetTemplateAsync(long templateId, CancellationToken cancellationToken)
-        {
-            var request = new RestRequest($"api/v1/templates/{templateId}");
-            var response = await this.restClient.ExecuteAsync<Template>(request, cancellationToken: cancellationToken);
-            if (response.StatusCode == HttpStatusCode.OK)
-                return response.Data;
-
-            this.logger.LogWarning($"Getting template. Response status code: {response.StatusCode}.\n" +
-                $"Response: {response.Content}");
-            return default;
+            var file = await this.apiClient.GetArchiveAsync(fileName);
+            if (file is null)
+                return (false, new[] { $"Failed to download archive with name ''" });
+            else
+                return this.fileManager.UnpackArchive(folder, file);
         }
 
         private async Task<VariableSet> GetVariablesAsync(long variableSetId, Dictionary<string, string> overrides, CancellationToken cancellationToken)
         {
-            var request = new RestRequest($"api/v1/variables/{variableSetId}");
-            var response = await this.restClient.ExecuteAsync<VariableSet>(request, cancellationToken: cancellationToken);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                var result = response.Data;
-                foreach (var key in overrides.Keys)
-                    result.Values[key] = overrides[key];
-                return result;
-            }
+            var set = await this.apiClient.GetVariableSetAsync(variableSetId, cancellationToken);
+            if (set is null)
+                return default;
 
-            this.logger.LogWarning($"Getting variables. Response status code: {response.StatusCode}.\n" +
-                $"Response: {response.Content}");
-            return default;
+            foreach (var key in overrides.Keys)
+                set.Values[key] = overrides[key];
+            return set;
         }
 
-        private async Task<Common.Models.File> GetArchiveAsync(string fileName, string version = null, CancellationToken cancellationToken = default)
-        {
-            var request = new RestRequest($"api/v1/packages/{fileName}"
-                + (string.IsNullOrWhiteSpace(version) ? "" : $"?version={version}"));
-            var response = await this.restClient.ExecuteAsync<Common.Models.File>(request, cancellationToken: cancellationToken);
-            if (response.StatusCode == HttpStatusCode.OK)
-                return response.Data;
-
-            this.logger.LogWarning($"Getting template. Response status code: {response.StatusCode}.\n" +
-                $"Response: {response.Content}");
-            return default;
-        }
-
-        private string Substitute(string command, Dictionary<string, string> variables)
+        private static string Substitute(string command, Dictionary<string, string> variables)
         {
             if (variables is null)
                 return command;

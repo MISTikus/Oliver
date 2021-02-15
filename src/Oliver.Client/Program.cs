@@ -5,12 +5,13 @@ using Microsoft.Extensions.Logging;
 using Oliver.Client.Configurations;
 using Oliver.Client.Executing;
 using Oliver.Client.Infrastructure;
-using Oliver.Client.Listening;
-using RestSharp;
+using Oliver.Client.Services;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Oliver.Client
@@ -38,9 +39,21 @@ namespace Oliver.Client
                     .ConfigureOptions<Configurations.Client>(hostContext.Configuration)
                     .AddTransient<IRunner, Runner>()
                     .AddTransient<IFileManager, FileManager>()
-                    .AddTransient<IRestClient>(s => new RestClient(serverOptions.BaseUrl))
+                    .AddSingleton(s =>
+                    {
+                        var opts = new JsonSerializerOptions();
+                        opts.Converters.Add(new JsonStringEnumConverter());
+                        opts.IgnoreNullValues = true;
+                        opts.PropertyNameCaseInsensitive = true;
+                        return opts;
+                    })
+                    .AddSingleton<IApiClient>(s => new OliverApiClient(
+                        serverOptions.BaseUrl,
+                        new ApiUrlHelper(serverOptions.ApiVersion),
+                        s.GetService<JsonSerializerOptions>(),
+                        s.GetService<ILogger<OliverApiClient>>()))
                     .AddSingleton<ILogSender, LogSender>()
-                    .AddSingleton<Executor>() // ToDo: check scope
+                    .AddSingleton<Executor>()
                     .AddSingleton<Func<IExecutor>>(s => () => s.GetRequiredService<Executor>())
                     .AddLogging(c =>
                     {
