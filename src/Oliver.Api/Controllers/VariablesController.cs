@@ -2,12 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Oliver.Common.Models;
 using System;
-using System.Threading.Tasks;
 
 namespace Oliver.Api.Controllers
 {
     [ApiController]
-    [Route("api/variables")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1")]
     public class VariablesController : ControllerBase
     {
         private readonly Func<ILiteDatabase> databaseFactory;
@@ -15,29 +15,29 @@ namespace Oliver.Api.Controllers
         public VariablesController(Func<ILiteDatabase> databaseFactory) => this.databaseFactory = databaseFactory;
 
         [HttpGet("{tenant}/{environment}")]
-        public async Task<ActionResult<VariableSet>> Get([FromRoute]string tenant, [FromRoute]string environemnt)
+        public ActionResult<VariableSet> Get([FromRoute] string tenant, [FromRoute] string environemnt)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();
             var variables = collection.FindOne(x => x.Instance.Tenant == tenant && x.Instance.Environment == environemnt);
             return variables is null
-                ? NotFound() as ActionResult
+                ? NotFound()
                 : Ok(variables);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<VariableSet>> Get([FromRoute]long id)
+        public ActionResult<VariableSet> Get([FromRoute] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();
             var variables = collection.FindById(id);
             return variables is null
-                ? NotFound() as ActionResult
+                ? NotFound()
                 : Ok(variables);
         }
 
         [HttpPost]
-        public async Task<ActionResult<long>> Add([FromBody]VariableSet variables)
+        public ActionResult<long> Add([FromBody] VariableSet variables)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();
@@ -46,7 +46,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update([FromQuery]long id, [FromBody]VariableSet variables)
+        public IActionResult Update([FromQuery] long id, [FromBody] VariableSet variables)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();
@@ -58,7 +58,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Remove([FromQuery]long id)
+        public IActionResult Remove([FromQuery] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<VariableSet>();

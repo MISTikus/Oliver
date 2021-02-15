@@ -7,12 +7,12 @@ namespace Oliver.Client.Executing
 {
     internal class Runner : IRunner
     {
-        public async Task<(bool isSuccessed, string[] logs)> RunCMD(string folder, string command) => await Run("CMD", "/C", folder, command);
-        public async Task<(bool isSuccessed, string[] logs)> RunCompose(string folder, string command) => await Run("docker-compose", "", folder, command);
-        public async Task<(bool isSuccessed, string[] logs)> RunDocker(string folder, string command) => await Run("docker", "", folder, command);
-        public async Task<(bool isSuccessed, string[] logs)> RunPowerShell(string folder, string command) => await Run("powershell", "-Command", folder, command);
+        public async Task<(bool isSuccessed, string[] logs)> RunCMDAsync(string folder, string command) => await RunAsync("CMD", "/C", folder, command);
+        public async Task<(bool isSuccessed, string[] logs)> RunComposeAsync(string folder, string command) => await RunAsync("docker-compose", "", folder, command);
+        public async Task<(bool isSuccessed, string[] logs)> RunDockerAsync(string folder, string command) => await RunAsync("docker", "", folder, command);
+        public async Task<(bool isSuccessed, string[] logs)> RunPowerShellAsync(string folder, string command) => await RunAsync("powershell", "-Command", folder, command);
 
-        private async Task<(bool isSuccessed, string[] logs)> Run(string exec, string argPrefix, string folder, string command)
+        private async Task<(bool isSuccessed, string[] logs)> RunAsync(string exec, string argPrefix, string folder, string command)
         {
             var logs = new List<string>();
             try
@@ -50,9 +50,9 @@ namespace Oliver.Client.Executing
 
     internal interface IRunner
     {
-        Task<(bool isSuccessed, string[] logs)> RunPowerShell(string folder, string command);
-        Task<(bool isSuccessed, string[] logs)> RunCMD(string folder, string command);
-        Task<(bool isSuccessed, string[] logs)> RunDocker(string folder, string command);
-        Task<(bool isSuccessed, string[] logs)> RunCompose(string folder, string command);
+        Task<(bool isSuccessed, string[] logs)> RunPowerShellAsync(string folder, string command);
+        Task<(bool isSuccessed, string[] logs)> RunCMDAsync(string folder, string command);
+        Task<(bool isSuccessed, string[] logs)> RunDockerAsync(string folder, string command);
+        Task<(bool isSuccessed, string[] logs)> RunComposeAsync(string folder, string command);
     }
 }

@@ -34,3 +34,9 @@ packages/
 /queues/**
 #Database files
 *.db
+#KDiff
+*.orig
+#StorageDb
+/**/fileStorage/
+#Debug WorkFolder
+/workFolder/**

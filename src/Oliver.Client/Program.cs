@@ -5,24 +5,28 @@ using Microsoft.Extensions.Logging;
 using Oliver.Client.Configurations;
 using Oliver.Client.Executing;
 using Oliver.Client.Infrastructure;
-using Oliver.Client.Listening;
-using RestSharp;
+using Oliver.Client.Services;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Oliver.Client
 {
     internal static class Program
     {
-        private static async Task Main(string[] args) => await CreateHostBuilder(args).Build().RunAsync();
+        private static async Task Main(string[] args)
+            => await CreateHostBuilder(args).Build().RunAsync();
 
         public static IHostBuilder CreateHostBuilder(string[] args) => Host
             .CreateDefaultBuilder(args)
             .ConfigureHostConfiguration(configHost => configHost
-                .SetBasePath(Debugger.IsAttached ? Directory.GetCurrentDirectory() : Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName))
+                .SetBasePath(Debugger.IsAttached
+                    ? Directory.GetCurrentDirectory()
+                    : Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName))
                 .AddJsonFile("appsettings.json", true, true)
             //.AddEnvironmentVariables(prefix: "PREFIX_")
             )
@@ -34,15 +38,28 @@ namespace Oliver.Client
                 services
                     .ConfigureOptions<Configurations.Client>(hostContext.Configuration)
                     .AddTransient<IRunner, Runner>()
-                    .AddTransient<IRestClient>(s => new RestClient(serverOptions.BaseUrl))
-                    .AddSingleton<Executor>() // ToDo: check scope
+                    .AddTransient<IFileManager, FileManager>()
+                    .AddSingleton(s =>
+                    {
+                        var opts = new JsonSerializerOptions();
+                        opts.Converters.Add(new JsonStringEnumConverter());
+                        opts.IgnoreNullValues = true;
+                        opts.PropertyNameCaseInsensitive = true;
+                        return opts;
+                    })
+                    .AddSingleton<IApiClient>(s => new OliverApiClient(
+                        serverOptions.BaseUrl,
+                        new ApiUrlHelper(serverOptions.ApiVersion),
+                        s.GetService<JsonSerializerOptions>(),
+                        s.GetService<ILogger<OliverApiClient>>()))
                     .AddSingleton<ILogSender, LogSender>()
+                    .AddSingleton<Executor>()
                     .AddSingleton<Func<IExecutor>>(s => () => s.GetRequiredService<Executor>())
                     .AddLogging(c =>
                     {
                         c.AddConsole();
                         if (!args.Contains("--nologs"))
-                            c.AddProvider(new FileProvider(logOptions));
+                            c.AddProvider(new FileLoggerProvider(logOptions));
                     });
 
                 services.AddHostedService<Listener>();
@@ -54,8 +71,9 @@ namespace Oliver.Client
             return options;
         }
 
-        private static IServiceCollection ConfigureOptions<T>(this IServiceCollection services, IConfiguration configuration)
-            where T : class => services
-            .Configure<T>(configuration.GetSection(typeof(T).Name));
+        private static IServiceCollection ConfigureOptions<T>(
+            this IServiceCollection services, IConfiguration configuration
+        ) where T : class
+            => services.Configure<T>(configuration.GetSection(typeof(T).Name));
     }
 }

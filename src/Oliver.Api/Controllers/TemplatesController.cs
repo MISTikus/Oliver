@@ -2,12 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Oliver.Common.Models;
 using System;
-using System.Threading.Tasks;
 
 namespace Oliver.Api.Controllers
 {
     [ApiController]
-    [Route("api/templates")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1")]
     public class TemplatesController : ControllerBase
     {
         private readonly Func<ILiteDatabase> databaseFactory;
@@ -15,18 +15,18 @@ namespace Oliver.Api.Controllers
         public TemplatesController(Func<ILiteDatabase> databaseFactory) => this.databaseFactory = databaseFactory;
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Template>> GetTemplate([FromRoute]long id)
+        public ActionResult<Template> GetTemplate([FromRoute] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Template>();
             var template = collection.FindById(id);
             return template is null
-                ? NotFound() as ActionResult
+                ? NotFound()
                 : Ok(template);
         }
 
         [HttpPost]
-        public async Task<ActionResult<long>> AddTemplate([FromBody]Template template)
+        public ActionResult<long> AddTemplate([FromBody] Template template)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Template>();
@@ -35,7 +35,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTemplate([FromQuery]long id, [FromBody]Template template)
+        public IActionResult UpdateTemplate([FromQuery] long id, [FromBody] Template template)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Template>();
@@ -47,7 +47,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> RemoveTemplate([FromQuery]long id)
+        public IActionResult RemoveTemplate([FromQuery] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Template>();

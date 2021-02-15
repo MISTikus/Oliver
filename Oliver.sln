@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		tools\.env = tools\.env
 		tools\build.docker.ps1 = tools\build.docker.ps1
 		tools\docker-compose.yml = tools\docker-compose.yml
+		readme.md = readme.md
 		tools\release.client.ps1 = tools\release.client.ps1
 		tools\release.docker.ps1 = tools\release.docker.ps1
 		tools\run.compose.ps1 = tools\run.compose.ps1

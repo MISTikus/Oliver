@@ -1,0 +1,22 @@
+### Add Template
+# @name add
+POST {{host}}/api/{{version}}/templates
+Content-Type: application/json
+
+{
+    "steps":[{
+            "order": 1,
+            "name": "Echo start process",
+            "type": "CMD",
+            "command": "echo ***  Started!!!  ***"
+        },{
+            "order": 2,
+            "name": "Load archive",
+            "type": "Archive",
+            "fileName": "somefile.zip"
+        }
+    ]
+}
+
+### Get Template
+GET {{host}}/api/{{version}}/templates/{{add.response.body.*}}

@@ -1,0 +1,18 @@
+### Add File
+POST {{host}}/api/{{version}}/packages
+Content-Type: multipart/form-data; boundary=package
+
+--package
+Content-Disposition: form-data; name="Version"
+
+1.0.2
+--package
+Content-Disposition: form-data; name="Body"; filename="somefile.zip"
+Content-Type: application/zip
+
+< ./data/somefile.zip
+--package--
+
+
+### Get file by name
+GET {{host}}/api/{{version}}/packages/somefile.zip

@@ -12,7 +12,8 @@ using System.Threading.Tasks;
 namespace Oliver.Api.Controllers
 {
     [ApiController]
-    [Route("api/exec")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1")]
     public class ExecutionsController : ControllerBase
     {
         private readonly Func<Instance, IPersistentQueue> queueFactory;
@@ -29,7 +30,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpGet("{tenant}/{environment}/check")]
-        public async Task<ActionResult<long>> CheckForExecution([FromRoute]string tenant, [FromRoute]string environment, CancellationToken cancellation)
+        public async Task<ActionResult<long>> CheckForExecution([FromRoute] string tenant, [FromRoute] string environment, CancellationToken cancellation)
         {
             var instance = new Instance(tenant, environment);
 
@@ -55,19 +56,19 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Execution>> GetExecution([FromRoute]long id)
+        public ActionResult<Execution> GetExecution([FromRoute] long id)
         {
             using var db = this.databaseFactory();
             var collection = db.GetCollection<Execution>();
             var execution = collection.FindById(id);
             return execution is null
-                ? NotFound() as ActionResult
+                ? NotFound()
                 : Ok(execution);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> AddExecutionStepLog([FromRoute]long id, [FromBody]Execution.StepState stepState,
-            [FromQuery]Execution.ExecutionState? result)
+        public async Task<IActionResult> AddExecutionStepLog([FromRoute] long id, [FromBody] Execution.StepState stepState,
+            [FromQuery] Execution.ExecutionState? result)
         {
             this.logger.LogInformation("Received execution step log.");
             this.logger.LogInformation($"ExecutionId: '{id}'. Result: {result}.");
@@ -112,7 +113,7 @@ namespace Oliver.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<long>> AddExecution([FromBody]Execution execution)
+        public ActionResult<long> AddExecution([FromBody] Execution execution)
         {
             lock (locker)
             {

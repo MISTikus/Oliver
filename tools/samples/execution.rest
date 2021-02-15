@@ -1,0 +1,15 @@
+### Add Template
+# @name add
+POST {{host}}/api/{{version}}/executions
+Content-Type: application/json
+
+{
+    "templateId": 1,
+    "instance": {
+        "tenant": "Some",
+        "environment": "Prod"
+    }
+}
+
+### Get Execution
+GET {{host}}/api/{{version}}/executions/{{add.response.body.*}}
