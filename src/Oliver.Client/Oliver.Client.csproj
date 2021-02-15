@@ -31,8 +31,4 @@
     <ProjectReference Include="..\Oliver.Common\Oliver.Common.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Listening\" />
-  </ItemGroup>
-
 </Project>
