@@ -21,7 +21,9 @@ Deploy management app
 - [ ] Administrator UI
 
 ### Server features
-
+- Scaling
+  - [ ] External database
+  - [ ] External queue
 - Logging deployment process
   - [x] View deploing log through API request
 - Configuration/Variables
@@ -31,7 +33,7 @@ Deploy management app
 
 ### Client features
 
-- [ ] Listen mode
+- [ ] Listen mode (maybe `grpc`?)
 - [x] Pooling mode
 - [x] Unpack archive with binaries
 - [x] Substitute configurations
