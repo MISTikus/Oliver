@@ -44,3 +44,15 @@ Deploy management app
 
 - [ ] For now, if more than one client, execution will be executed only on one client
 - [ ] Maybe `.sh` support?
+- [ ] Different transport (brocker) support
+  - [x] File system
+  - [ ] Rabbit
+  - [ ] Kaffka
+  - [ ] ServiceBus
+  - [ ] else?
+- [ ] Different database providers
+  - [ ] MSSql
+  - [ ] Postgres
+  - [ ] MongoDb
+  - [ ] Mysql?
+  - [ ] else?
