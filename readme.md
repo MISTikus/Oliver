@@ -51,6 +51,7 @@ Deploy management app
   - [ ] ServiceBus
   - [ ] else?
 - [ ] Different database providers
+  - [x] LiteDb
   - [ ] MSSql
   - [ ] Postgres
   - [ ] MongoDb
