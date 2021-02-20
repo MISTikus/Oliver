@@ -51,7 +51,7 @@ namespace Oliver.Client
                         serverOptions.BaseUrl,
                         new ApiUrlHelper(serverOptions.ApiVersion),
                         s.GetService<JsonSerializerOptions>(),
-                        s.GetService<ILogger<OliverApiClient>>()))
+                        m => s.GetService<ILogger<OliverApiClient>>().LogError(m)))
                     .AddSingleton<ILogSender, LogSender>()
                     .AddSingleton<Executor>()
                     .AddSingleton<Func<IExecutor>>(s => () => s.GetRequiredService<Executor>())

@@ -1,8 +1,10 @@
-﻿using RestSharp;
+﻿using Oliver.Client.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Oliver.IntegrationTests.Helpers
 {
@@ -17,6 +19,7 @@ namespace Oliver.IntegrationTests.Helpers
         private const string buildConfiguration = "Release";
 #endif
         protected const string apiHost = "https://localhost:5001/";
+        protected const string version = "1";
         protected const string templatesApi = "api/templates";
         protected const string packagesApi = "api/packages";
 
@@ -24,24 +27,38 @@ namespace Oliver.IntegrationTests.Helpers
         protected const string scriptFileName = "somescript.cmd";
 
         protected static readonly string solutionFolder = Path.GetFullPath(@"..\..\..\..\..\");
-        protected static readonly Process serverProcess = Process.Start(
-            Path.Combine(solutionFolder, @"src\Oliver.Api\bin", buildConfiguration, "Oliver.Api.exe"));
-        protected static readonly Process clientProcess = Process.Start(
-            Path.Combine(solutionFolder, @"src\Oliver.Client\bin", buildConfiguration, "Oliver.Client.exe"));
-        protected readonly RestClient restClient;
+
+        protected static Process serverProcess;
+        protected static Process clientProcess;
+
+        protected readonly JsonSerializerOptions jsonOptions;
+        protected readonly List<string> errors;
+        protected readonly OliverApiClient api;
         protected readonly List<string> clientLog = new List<string>();
         protected readonly List<string> serverLog = new List<string>();
 
         protected ClientServerTestBase()
         {
-            this.restClient = new RestClient(apiHost);
+            this.jsonOptions = new JsonSerializerOptions();
+            this.jsonOptions.Converters.Add(new JsonStringEnumConverter());
+            this.jsonOptions.IgnoreNullValues = true;
+            this.jsonOptions.PropertyNameCaseInsensitive = true;
+
+            this.errors = new List<string>();
+            this.api = new OliverApiClient(apiHost, new ApiUrlHelper(version), this.jsonOptions, this.errors.Add);
+
+            var serverPSI = new ProcessStartInfo(Path.Combine(solutionFolder, @"src\Oliver.Api\bin", buildConfiguration, "Oliver.Api.exe"));
+            var clientPSI = new ProcessStartInfo(Path.Combine(solutionFolder, @"src\Oliver.Client\bin", buildConfiguration, "Oliver.Client.exe"));
+            serverProcess = Process.Start(serverPSI);
+            clientProcess = Process.Start(clientPSI);
+
             serverProcess.ErrorDataReceived += (s, a) => this.serverLog.Add(a.Data);
             serverProcess.OutputDataReceived += (s, a) => this.serverLog.Add(a.Data);
             clientProcess.ErrorDataReceived += (s, a) => this.clientLog.Add(a.Data);
             clientProcess.OutputDataReceived += (s, a) => this.clientLog.Add(a.Data);
         }
 
-        protected Exception AssertionException(string message, string errorMessage)
+        protected static Exception AssertionException(string message, string errorMessage)
             => throw new ArgumentException(string.Join("\n", message, errorMessage));
 
 

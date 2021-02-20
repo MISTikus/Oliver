@@ -82,7 +82,8 @@ namespace Oliver.Api
                 c.SwaggerEndpoint("v1/swagger.json", "API");
             });
 
-            logFactory.AddFile(".\\logs\\server.log", LogLevel.Trace);
+            var storageOptions = Configuration.GetOptions<Storage>();
+            logFactory.AddFile(Path.Combine(storageOptions.FileLogsFodler, "server.log"), LogLevel.Trace);
 
             app.UseHttpsRedirection()
                 .UseRouting()

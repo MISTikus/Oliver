@@ -1,11 +1,8 @@
-﻿using Oliver.Common.Models;
+﻿using FluentAssertions;
+using Oliver.Common.Models;
 using Oliver.IntegrationTests.Helpers;
-using RestSharp;
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -18,52 +15,23 @@ namespace Oliver.IntegrationTests
         public async Task Deploy_Should_Execute_Properly()
         {
             // Arrange
-            await CreatePackage();
+            var packageId = await CreatePackage();
             var templateId = await CreateTemplate();
 
             // Action
 
             // Assert
-
         }
 
-        private async Task CreatePackage()
+        private async Task<long> CreatePackage()
         {
-            var fileName = Path.Combine(solutionFolder, @"samples\data", scriptArchiveFileName);
+            var fileName = Path.Combine(solutionFolder, @"tools\samples\data", scriptArchiveFileName);
             if (!System.IO.File.Exists(fileName))
-                throw base.AssertionException("File does not exists.", fileName);
-            /*
-            var request = new RestRequest(templatesApi)
-            {
-                RequestFormat = DataFormat.Json,
-                AlwaysMultipartFormData = true
-            };
+                throw AssertionException("File does not exists.", fileName);
 
-            request.AddHeader("Content-Type", "multipart/form-data");
-            request.AddParameter("Version", "1.0.1", ParameterType.RequestBody);
-            request.AddFile(fileName, fileName, "application/zip");
-            request.AddParameter("Body", fileName, "application/zip", ParameterType.RequestBody);
-
-            var response = await base.restClient.ExecutePostAsync(request);
-            if (!response.IsSuccessful)
-                throw base.AssertionException("Failed to create package.", response.ErrorMessage);
-            */
-
-            var client = new HttpClient { BaseAddress = new Uri(apiHost) };
-            var content = new MultipartFormDataContent();
-            var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(fileName));
-            fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-            {
-                FileName = scriptArchiveFileName,
-                Name = "Body"
-            };
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/zip");
-            content.Add(fileContent);
-
-            content.Add(new StringContent("1.0.1"), "Version");
-            var response = await client.PostAsync(packagesApi, content);
-            if (!response.IsSuccessStatusCode)
-                throw base.AssertionException("Failed to create package.", await response?.Content?.ReadAsStringAsync());
+            var id = await this.api.CreatePackageAsync(fileName, "1.0.1");
+            this.errors.Should().BeEmpty();
+            return id;
         }
 
         private async Task<long> CreateTemplate()
@@ -88,12 +56,10 @@ namespace Oliver.IntegrationTests
                     }
                 }
             };
-            var request = new RestRequest(templatesApi);
-            request.AddJsonBody(template);
-            var idResponse = await base.restClient.ExecutePostAsync<long>(request);
-            if (!idResponse.IsSuccessful)
-                throw base.AssertionException($"Failed to create template.", idResponse.ErrorMessage);
-            return idResponse.Data;
+
+            var id = await this.api.CreateTemplateAsync(template);
+            this.errors.Should().BeEmpty();
+            return id;
         }
     }
 }

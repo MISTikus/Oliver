@@ -98,7 +98,7 @@ namespace Oliver.Client.Executing
 
         private async Task<(bool isSuccessed, string[] logs)> UnpackArchiveAsync(string fileName, string folder)
         {
-            var file = await this.apiClient.GetArchiveAsync(fileName);
+            var file = await this.apiClient.GetPackageAsync(fileName);
             if (file is null)
                 return (false, new[] { $"Failed to download archive with name ''" });
             else

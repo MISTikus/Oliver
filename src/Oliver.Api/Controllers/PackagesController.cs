@@ -1,9 +1,9 @@
 ﻿using LiteDB;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Oliver.Api.Services;
 using Oliver.Common.Models;
+using Oliver.Common.Models.ApiContracts;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -96,12 +96,6 @@ namespace Oliver.Api.Controllers
                 Version = request.Version,
                 Body = null
             };
-        }
-
-        public class FileRequest
-        {
-            public string Version { get; set; }
-            public IFormFile Body { get; set; }
         }
     }
 }
