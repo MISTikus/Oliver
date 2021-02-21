@@ -39,6 +39,7 @@ Deploy management app
 - [x] Substitute configurations
 - [x] Run scripts
 - [x] Send deployment process log to server Logging Api
+- [ ] Self update
 
 ## Questions/Issues
 
