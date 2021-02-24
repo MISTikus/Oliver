@@ -23,8 +23,8 @@ namespace Oliver.Client.Services
         public static string AddQuery(this string url, params (string key, object value)[] parameters)
             => url +
             (parameters.Any(x => !string.IsNullOrWhiteSpace(x.key) && !string.IsNullOrWhiteSpace(x.value?.ToString()))
-                ? ""
-                : string.Join('&', Encode(parameters)));
+                ? "?" + string.Join('&', Encode(parameters))
+                : "");
         private static string[] Encode((string key, object value)[] parameters) => parameters
             .Where(x => !string.IsNullOrWhiteSpace(x.key) && !string.IsNullOrWhiteSpace(x.value?.ToString()))
             .Select(x => $"{x.key}={x.value}")

@@ -1,7 +1,9 @@
 ﻿using LiteDB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Oliver.Api.Services;
+using Oliver.Common.Extensions;
 using Oliver.Common.Models;
 using Oliver.Common.Models.ApiContracts;
 using System;
@@ -31,7 +33,16 @@ namespace Oliver.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<long>> AddFile([FromForm] FileRequest request)
         {
-            this.logger.Log(LogLevel.Information, new EventId(), request, null, (s, e) => $"Received: {s.Version}. {s.Body.FileName}:{s.Body.Length}");
+            this.logger.LogInformation($"Received: {request.Version}. {request.Body?.FileName}:{request.Body?.Length}");
+            this.logger.LogTrace("Request.Body: \n" + await Request.Body.ReadAsStringAsync("NULL", true));
+            this.logger.LogTrace("Request.Form: \n" + JsonConvert.SerializeObject(Request.Form));
+            this.logger.LogTrace("Request.FormFiles: \n" + JsonConvert.SerializeObject(Request.Form?.Files));
+            this.logger.LogTrace("Request.Headers: \n" + JsonConvert.SerializeObject(Request.Headers));
+            this.logger.LogTrace("Request.Method: \n" + JsonConvert.SerializeObject(Request.Method));
+            this.logger.LogTrace("Request.Path: \n" + JsonConvert.SerializeObject(Request.Path));
+            this.logger.LogTrace("Request.Query: \n" + JsonConvert.SerializeObject(Request.Query));
+            this.logger.LogTrace("Request.RouteValues: \n" + JsonConvert.SerializeObject(Request.RouteValues));
+
             if (request is null || request.Body is null)
                 return BadRequest("Empty request or body");
 

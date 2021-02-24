@@ -36,7 +36,5 @@ packages/
 *.db
 #KDiff
 *.orig
-#StorageDb
-/**/fileStorage/
-#Debug WorkFolder
-/workFolder/**
+#Debug artifacts
+/artifacts

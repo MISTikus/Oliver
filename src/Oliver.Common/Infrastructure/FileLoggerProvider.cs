@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
-using Oliver.Client.Configurations;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace Oliver.Client.Infrastructure
+namespace Oliver.Common.Infrastructure
 {
-    internal class FileLoggerProvider : ILoggerProvider
+    public class FileLoggerProvider : ILoggerProvider
     {
         private readonly string fileName;
         private readonly int maxLogSizeMb;

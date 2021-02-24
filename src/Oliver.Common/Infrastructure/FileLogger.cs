@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Oliver.Client.Infrastructure
+namespace Oliver.Common.Infrastructure
 {
-    internal class FileLogger : ILogger
+    public class FileLogger : ILogger
     {
         private readonly string categoryName;
         private readonly string fileName;
@@ -28,18 +28,21 @@ namespace Oliver.Client.Infrastructure
             {
                 if (!Directory.Exists(Path.GetDirectoryName(this.fileName)))
                     Directory.CreateDirectory(Path.GetDirectoryName(this.fileName));
+            }
 
-                var msgs = new List<string>
+            var msgs = new List<string>
                 {
                     $"{DateTime.Now.ToString("yyyy.MM.dd HH:mm:ss")}|{logLevel.ToString()}|{this.categoryName}| {formatter(state, exception)}",
                 };
 
-                if (exception != null)
-                {
-                    msgs.Add($"{DateTime.Now.ToString("yyyy.MM.dd HH:mm:ss")}|{logLevel.ToString()}|{this.categoryName}| {exception?.Message}");
-                    msgs.Add($"{DateTime.Now.ToString("yyyy.MM.dd HH:mm:ss")}|{logLevel.ToString()}|{this.categoryName}| {exception?.StackTrace}");
-                }
+            if (exception != null)
+            {
+                msgs.Add($"{DateTime.Now.ToString("yyyy.MM.dd HH:mm:ss")}|{logLevel.ToString()}|{this.categoryName}| {exception?.Message}");
+                msgs.Add($"{DateTime.Now.ToString("yyyy.MM.dd HH:mm:ss")}|{logLevel.ToString()}|{this.categoryName}| {exception?.StackTrace}");
+            }
 
+            lock (this.locker)
+            {
                 File.AppendAllLines(this.fileName, msgs);
             }
             this.recalculateLogFile();

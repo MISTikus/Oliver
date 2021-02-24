@@ -4,8 +4,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Oliver.Client.Configurations;
 using Oliver.Client.Executing;
-using Oliver.Client.Infrastructure;
 using Oliver.Client.Services;
+using Oliver.Common.Infrastructure;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -58,7 +58,7 @@ namespace Oliver.Client
                     .AddLogging(c =>
                     {
                         c.AddConsole();
-                        if (!args.Contains("--nologs"))
+                        if (!args.Contains("?nologs"))
                             c.AddProvider(new FileLoggerProvider(logOptions));
                     });
 

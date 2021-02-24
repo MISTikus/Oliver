@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Oliver.Common": {
+      "commandName": "Project",
+      "commandLineArgs": "?nologs"
+    }
+  }
+}

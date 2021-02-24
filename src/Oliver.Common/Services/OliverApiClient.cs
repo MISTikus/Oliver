@@ -1,6 +1,7 @@
 ﻿using Oliver.Common.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -43,6 +44,8 @@ namespace Oliver.Client.Services
                         : null)),
                 stepState,
                 cancellation);
+        public Task<long> CreateExecutionAsync(Execution execution, CancellationToken cancellation = default)
+            => PostAsync<Execution, long>(this.api.Route(x => x.Executions), execution, cancellation);
         #endregion execution
 
         #region templates
@@ -55,13 +58,15 @@ namespace Oliver.Client.Services
         #region variables
         public Task<VariableSet> GetVariableSetAsync(long setId, CancellationToken cancellation = default)
             => GetAsync<VariableSet>(this.api.Route(x => x.Variables, setId), cancellation: cancellation);
+        public Task<long> CreateVariableSetAsync(VariableSet variableSet, CancellationToken cancellation = default)
+            => PostAsync<VariableSet, long>(this.api.Route(x => x.Variables), variableSet, cancellation);
         #endregion variables
 
         #region packages
         public Task<File> GetPackageAsync(string fileName, string version = null, CancellationToken cancellation = default)
             => GetAsync<File>(this.api.Route(x => x.Packages, fileName).AddQuery((nameof(version), version)), cancellation: cancellation);
-        public async Task<long> CreatePackageAsync(string filePath, string version, CancellationToken cancellation = default)
-            => await PostFormAsync<long>(this.api.Route(x => x.Packages),
+        public async Task<string> CreatePackageAsync(string filePath, string version, CancellationToken cancellation = default)
+            => await PostFormAsync<string>(this.api.Route(x => x.Packages),
                 new Dictionary<string, HttpContent>
                 {
                     ["Body"] = await CreateFileContentAsync(filePath, "application/zip"),
@@ -141,7 +146,13 @@ namespace Oliver.Client.Services
             var content = new MultipartFormDataContent();
             foreach (var kv in body)
             {
-                content.Add(kv.Value, kv.Key);
+                if (kv.Value?.Headers?.Contains("filename") ?? false)
+                {
+                    content.Add(kv.Value, kv.Key, kv.Value.Headers.GetValues("filename").Single());
+                    kv.Value.Headers.Remove("filename");
+                }
+                else
+                    content.Add(kv.Value, kv.Key);
             }
 
             using var client = this.clientFactory();
@@ -149,6 +160,8 @@ namespace Oliver.Client.Services
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content?.ReadAsStringAsync(cancellation);
+                if (typeof(TResponse) == typeof(string))
+                    return (TResponse)(object)json;
                 return json is null
                     ? default
                     : JsonSerializer.Deserialize<TResponse>(json, this.jsonOptions);
@@ -161,17 +174,19 @@ namespace Oliver.Client.Services
             return default;
         }
 
-        private async Task<HttpContent> CreateFileContentAsync(string filePath, string mediaType)
+        private static async Task<HttpContent> CreateFileContentAsync(string filePath, string mediaType)
         {
-            var fileContent = new ByteArrayContent(await System.IO.File.ReadAllBytesAsync(filePath));
-            fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-            {
-                FileName = System.IO.Path.GetFileName(filePath)
-            };
+            var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var fileContent = new ByteArrayContent(bytes, 0, bytes.Length);
+            //fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+            //{
+            //    FileName = System.IO.Path.GetFileName(filePath)
+            //};
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
+            fileContent.Headers.Add("filename", System.IO.Path.GetFileName(filePath));
             return fileContent;
         }
-        private HttpContent CreateStringContent(string value) => new StringContent(value);
+        private static HttpContent CreateStringContent(string value) => new StringContent(value);
         #endregion HTTP
     }
 
@@ -182,13 +197,15 @@ namespace Oliver.Client.Services
         Task<Execution> GetExecutionAsync(long id, CancellationToken cancellation = default);
         Task<long?> CheckExecutions(string tenant, string environment, CancellationToken cancellation = default);
         Task SendExecutionLog(long executionId, bool isLastStep, Execution.StepState stepState, CancellationToken cancellation = default);
+        Task<long> CreateExecutionAsync(Execution execution, CancellationToken cancellation = default);
 
         Task<Template> GetTemplateAsync(long id, CancellationToken cancellation = default);
         Task<long> CreateTemplateAsync(Template template, CancellationToken cancellation = default);
 
         Task<VariableSet> GetVariableSetAsync(long setId, CancellationToken cancellation = default);
+        Task<long> CreateVariableSetAsync(VariableSet variableSet, CancellationToken cancellation = default);
 
         Task<File> GetPackageAsync(string fileName, string version = null, CancellationToken cancellation = default);
-        Task<long> CreatePackageAsync(string filePath, string version, CancellationToken cancellation = default);
+        Task<string> CreatePackageAsync(string filePath, string version, CancellationToken cancellation = default);
     }
 }
