@@ -18,7 +18,7 @@ namespace Oliver.Common.Extensions
                 return base64;
             }
 
-            var reader = new StreamReader(stream);
+            using var reader = new StreamReader(stream);
             return await reader.ReadToEndAsync();
         }
 

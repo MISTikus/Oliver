@@ -1,8 +1,10 @@
 ﻿using FluentAssertions;
+using Oliver.Client.Services;
 using Oliver.Common.Models;
 using Oliver.IntegrationTests.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -14,6 +16,40 @@ namespace Oliver.IntegrationTests
     [Collection("Integration")]
     public class DeployTest : ClientServerTestBase
     {
+        protected const string apiHost = "https://localhost:5001/";
+        protected const string version = "1";
+        protected const string tenant = "Some";
+        protected const string environment = "Prod";
+
+        protected const string scriptArchiveFileName = "somescript.zip";
+        protected const string scriptFileName = "somescript.ps1";
+
+        private static readonly string serverFolder = Path.Combine(solutionFolder, @"src\Oliver.Api\bin", buildConfiguration);
+        private static readonly string clientFolder = Path.Combine(solutionFolder, @"src\Oliver.Client\bin", buildConfiguration);
+        private readonly List<string> apiErrors;
+        private readonly IApiClient api;
+
+        public DeployTest()
+        {
+            var serverPSI = new ProcessStartInfo(Path.Combine(serverFolder, "Oliver.Api.exe"), "?nologs")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                WorkingDirectory = Path.Combine(solutionFolder, @"src\Oliver.Api")
+            };
+
+            var clientPSI = new ProcessStartInfo(Path.Combine(clientFolder, "Oliver.Client.exe"), "?nologs")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                WorkingDirectory = clientFolder
+            };
+            StartProcesses(("server", serverPSI), ("client", clientPSI));
+
+            this.apiErrors = new List<string>();
+            this.api = new OliverApiClient(apiHost, new ApiUrlHelper(version), this.jsonOptions, this.apiErrors.Add);
+        }
+
         [Fact]
         public async Task Deploy_Should_Execute_Properly()
         {
@@ -24,17 +60,34 @@ namespace Oliver.IntegrationTests
 
             // Action
             var executionId = await CreateExecutionAsync(templateId, variableSetId);
-            await Task.Delay(5000); // give client some time to work...
+            var execution = await RetryWhileCheckIsFalseAndTimeoutNotExpiredAsync(
+                () => this.api.GetExecutionAsync(executionId),
+                ex => ex?.State != Execution.ExecutionState.Added,
+                TimeSpan.FromSeconds(5));
 
             // Assert
-            var execution = await this.api.GetExecutionAsync(executionId);
+            execution.Should().NotBeNull();
+
             execution.State.Should().Be(Execution.ExecutionState.Successed, "\n" + string.Join('\n',
                 execution.StepsStates
                     .Select(s => $"{s.StepId}. {s.StepName}.{(s.IsSuccess ? "S" : "F")}: " +
                         $"{string.Join("\n\t", s.Log)}")
-                    .Concat(new[] { "Client log:" }.Concat(ClientLog))));
+                    .Concat(new[] { "Client log:" }.Concat(this.Logs["client"]))));
 
-            CheckVariablesByLogs(execution);
+            var extractArchiveLog = execution.StepsStates.First(x => x.StepId == 1).Log;
+            extractArchiveLog
+                .Should()
+                .Contain(@$"Executing at folder: '{solutionFolder}\artifacts\workFolder\{tenant}'");
+
+            var echoLog = execution.StepsStates.First(x => x.StepId == 2).Log;
+            echoLog
+                .Should()
+                .Contain("Johny, It's Allive!!!");
+
+            var variableStepLog = execution.StepsStates.First(x => x.StepId == 3).Log;
+            variableStepLog
+                .Should()
+                .Contain($"{tenant}{environment}TemplateVariableValueExecutionVariableValue");
         }
 
         private async Task<string> CreatePackageAsync()
@@ -47,7 +100,7 @@ namespace Oliver.IntegrationTests
             ZipFile.CreateFromDirectory(tempFolder, scriptArchiveTempFileName);
 
             var id = await this.api.CreatePackageAsync(scriptArchiveTempFileName, "1.0.1");
-            this.errors.Should().BeEmpty(string.Join('\n', new[] { "Server log:" }.Concat(ServerLog)));
+            this.apiErrors.Should().BeEmpty(string.Join('\n', new[] { "Server log:" }.Concat(this.Logs["server"])));
 
             Directory.Delete(tempFolder, true);
             if (System.IO.File.Exists(scriptArchiveTempFileName))
@@ -87,7 +140,7 @@ namespace Oliver.IntegrationTests
             };
 
             var id = await this.api.CreateTemplateAsync(template);
-            this.errors.Should().BeEmpty(string.Join('\n', new[] { "Server log:" }.Concat(ServerLog)));
+            this.apiErrors.Should().BeEmpty(string.Join('\n', new[] { "Server log:" }.Concat(this.Logs["server"])));
             return id;
         }
 
@@ -100,7 +153,7 @@ namespace Oliver.IntegrationTests
             };
 
             var id = await this.api.CreateVariableSetAsync(variableSet);
-            this.errors.Should().BeEmpty(string.Join('\n', new[] { "Server log:" }.Concat(ServerLog)));
+            this.apiErrors.Should().BeEmpty(string.Join('\n', new[] { "Server log:" }.Concat(this.Logs["server"])));
             return id;
         }
 
@@ -115,26 +168,8 @@ namespace Oliver.IntegrationTests
             };
 
             var id = await this.api.CreateExecutionAsync(execution);
-            this.errors.Should().BeEmpty(string.Join('\n', new[] { "Server log:" }.Concat(ServerLog)));
+            this.apiErrors.Should().BeEmpty(string.Join('\n', new[] { "Server log:" }.Concat(this.Logs["server"])));
             return id;
-        }
-
-        private static void CheckVariablesByLogs(Execution execution)
-        {
-            var extractArchiveLog = execution.StepsStates.First(x => x.StepId == 1).Log;
-            extractArchiveLog
-                .Should()
-                .Contain(@$"Executing at folder: '{solutionFolder}\artifacts\workFolder\{tenant}'");
-
-            var echoLog = execution.StepsStates.First(x => x.StepId == 2).Log;
-            echoLog
-                .Should()
-                .Contain("Johny, It's Allive!!!");
-
-            var variableStepLog = execution.StepsStates.First(x => x.StepId == 3).Log;
-            variableStepLog
-                .Should()
-                .Contain($"{tenant}{environment}TemplateVariableValueExecutionVariableValue");
         }
     }
 }

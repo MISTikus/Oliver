@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Oliver.Client": {
+      "commandName": "Project",
+      "commandLineArgs": "?nologs"
+    }
+  }
+}
