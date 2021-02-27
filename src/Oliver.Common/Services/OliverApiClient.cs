@@ -178,10 +178,6 @@ namespace Oliver.Client.Services
         {
             var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
             var fileContent = new ByteArrayContent(bytes, 0, bytes.Length);
-            //fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
-            //{
-            //    FileName = System.IO.Path.GetFileName(filePath)
-            //};
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
             fileContent.Headers.Add("filename", System.IO.Path.GetFileName(filePath));
             return fileContent;
