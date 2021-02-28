@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -12,7 +13,8 @@ namespace Oliver.Common.Infrastructure
         private readonly int maxLogSizeMb;
         private readonly int maxFilesCount;
         private readonly string archiveLogFileFormat;
-        private readonly object locker = new object();
+        private static readonly ConcurrentDictionary<string, object> lockers = new ConcurrentDictionary<string, object>();
+        private object currentLocker;
 
         public FileLoggerProvider(LogFile options)
         {
@@ -22,7 +24,13 @@ namespace Oliver.Common.Infrastructure
             this.archiveLogFileFormat = options.ArchiveLogFileFormat;
         }
 
-        public ILogger CreateLogger(string categoryName) => new FileLogger(categoryName, this.fileName, this.locker, RecalculateLogFile);
+        public ILogger CreateLogger(string categoryName)
+        {
+            lockers.TryAdd(this.fileName, new object());
+            this.currentLocker = lockers[this.fileName];
+            return new FileLogger(categoryName, this.fileName, RecalculateLogFile);
+        }
+
         public void Dispose() => GC.SuppressFinalize(this);
 
         private void RecalculateLogFile()
@@ -32,7 +40,7 @@ namespace Oliver.Common.Infrastructure
                 if (!File.Exists(this.fileName))
                     return;
 
-                lock (this.locker)
+                lock (this.currentLocker)
                 {
                     var len = new FileInfo(this.fileName).Length;
                     if (len / 1024 / 1024 >= this.maxLogSizeMb)
@@ -65,11 +73,11 @@ namespace Oliver.Common.Infrastructure
             private readonly object locker;
             private readonly Action recalculateLogFile;
 
-            public FileLogger(string categoryName, string fileName, object locker, Action recalculateLogFile)
+            public FileLogger(string categoryName, string fileName, Action recalculateLogFile)
             {
                 this.categoryName = categoryName;
                 this.fileName = fileName;
-                this.locker = locker;
+                this.locker = lockers[fileName];
                 this.recalculateLogFile = recalculateLogFile;
             }
 
@@ -79,8 +87,9 @@ namespace Oliver.Common.Infrastructure
             {
                 lock (this.locker)
                 {
-                    if (!Directory.Exists(Path.GetDirectoryName(this.fileName)))
-                        Directory.CreateDirectory(Path.GetDirectoryName(this.fileName));
+                    var directory = Path.GetDirectoryName(this.fileName);
+                    if (!Directory.Exists(directory))
+                        Directory.CreateDirectory(directory);
                 }
 
                 var msgs = new List<string>
