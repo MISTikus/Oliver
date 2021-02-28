@@ -6,11 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Oliver.Api.Configurations;
 using Oliver.Api.Extensions;
 using Oliver.Api.Middleware.Swashbuckle;
 using Oliver.Api.Services;
+using Oliver.Common.Infrastructure;
 using Oliver.Common.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
@@ -28,6 +30,7 @@ namespace Oliver.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
+            var logOptions = Configuration.GetOptions<LogFile>();
             var storageOptions = Configuration.GetOptions<Storage>();
             var dbOptions = Configuration.GetOptions<Database>();
 
@@ -64,11 +67,23 @@ namespace Oliver.Api
                     c.ReportApiVersions = true;
                     c.DefaultApiVersion = new ApiVersion(1, 0);
                 })
+                .AddLogging(c =>
+                {
+                    c.AddConsole();
+                    if (!Configuration.GetValue<bool>("nologs"))
+                        c.AddProvider(new FileLoggerProvider(logOptions));
+                })
                 ;
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app,
+            IWebHostEnvironment env,
+            ILoggerFactory logFactory)
         {
+            var logger = logFactory.CreateLogger<Startup>();
+            logger.LogInformation("Starting application...");
+            logger.LogInformation("Initialize...");
+
             if (env.IsDevelopment())
                 app.UseDeveloperExceptionPage();
 
@@ -79,11 +94,13 @@ namespace Oliver.Api
                 c.SwaggerEndpoint("v1/swagger.json", "API");
             });
 
+
             app.UseHttpsRedirection()
                 .UseRouting()
                 .UseAuthorization()
                 .UseEndpoints(endpoints => endpoints.MapControllers())
             ;
+            logger.LogInformation("Application initialized...");
         }
         private Func<Instance, IPersistentQueue> QueueFactory(string dataStorageFolder) =>
             instance => new PersistentQueue(Path.Combine(dataStorageFolder, instance.Tenant, instance.Environment));

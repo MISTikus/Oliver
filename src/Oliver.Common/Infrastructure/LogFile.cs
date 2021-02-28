@@ -1,6 +1,6 @@
-﻿namespace Oliver.Client.Configurations
+﻿namespace Oliver.Common.Infrastructure
 {
-    internal class LogFile
+    public class LogFile
     {
         public string FileName { get; set; }
         public string ArchiveLogFileFormat { get; set; }

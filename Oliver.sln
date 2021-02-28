@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Oliver.Client", "src\Oliver
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{D99FC4A4-08D3-4D37-815D-B101274E7C96}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Oliver.Tests", "tests\Oliver.Tests\Oliver.Tests.csproj", "{78672738-8840-43F0-9C5B-E4C76BB5813A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Oliver.UnitTests", "tests\Oliver.UnitTests\Oliver.UnitTests.csproj", "{78672738-8840-43F0-9C5B-E4C76BB5813A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Oliver.Common", "src\Oliver.Common\Oliver.Common.csproj", "{25EC3DEC-FC68-4664-A1BB-33D3106F2996}"
 EndProject
@@ -26,6 +26,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		tools\run.compose.ps1 = tools\run.compose.ps1
 		tools\run.docker.ps1 = tools\run.docker.ps1
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Oliver.IntegrationTests", "tests\Oliver.IntegrationTests\Oliver.IntegrationTests.csproj", "{B8388F1F-9B75-4078-A25D-8E90784B4682}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,6 +87,18 @@ Global
 		{25EC3DEC-FC68-4664-A1BB-33D3106F2996}.Release|x64.Build.0 = Release|Any CPU
 		{25EC3DEC-FC68-4664-A1BB-33D3106F2996}.Release|x86.ActiveCfg = Release|Any CPU
 		{25EC3DEC-FC68-4664-A1BB-33D3106F2996}.Release|x86.Build.0 = Release|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Debug|x64.Build.0 = Debug|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Debug|x86.Build.0 = Debug|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Release|x64.ActiveCfg = Release|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Release|x64.Build.0 = Release|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Release|x86.ActiveCfg = Release|Any CPU
+		{B8388F1F-9B75-4078-A25D-8E90784B4682}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -94,6 +108,7 @@ Global
 		{2F542607-444E-4DAD-84D4-0A26724462B0} = {2AC3A194-7D5C-4C10-B620-015A0CE6CC26}
 		{78672738-8840-43F0-9C5B-E4C76BB5813A} = {D99FC4A4-08D3-4D37-815D-B101274E7C96}
 		{25EC3DEC-FC68-4664-A1BB-33D3106F2996} = {2AC3A194-7D5C-4C10-B620-015A0CE6CC26}
+		{B8388F1F-9B75-4078-A25D-8E90784B4682} = {D99FC4A4-08D3-4D37-815D-B101274E7C96}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F48D62C4-9FF5-4D99-9A8C-A69FDFC8F3D0}

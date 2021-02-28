@@ -5,14 +5,14 @@ Content-Type: multipart/form-data; boundary=package
 --package
 Content-Disposition: form-data; name="Version"
 
-1.0.2
+1.0.1
 --package
-Content-Disposition: form-data; name="Body"; filename="somefile.zip"
+Content-Disposition: form-data; name="Body"; filename="somescript.zip"
 Content-Type: application/zip
 
-< ./data/somefile.zip
+< ./data/somescript.zip
 --package--
 
 
 ### Get file by name
-GET {{host}}/api/{{version}}/packages/somefile.zip
+GET {{host}}/api/packages/somescript.zip

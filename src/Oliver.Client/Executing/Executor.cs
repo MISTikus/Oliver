@@ -20,6 +20,8 @@ namespace Oliver.Client.Executing
         private readonly IFileManager fileManager;
         private readonly ILogSender logSender;
 
+        private const string substituteFileTypes = "*.sql;*.txt;*.ps1;*.cmd;*.js;*.json";
+
         public Executor(IApiClient apiClient, IOptions<Configurations.Client> instanceOptions,
             IRunner runner, IFileManager fileManager,
             ILogSender logSender, ILogger<Executor> logger)
@@ -49,21 +51,23 @@ namespace Oliver.Client.Executing
         {
             var template = await this.apiClient.GetTemplateAsync(execution.TemplateId, cancellationToken);
             var variables = execution.VariableSetId == default
-                ? null
+                ? new VariableSet()
                 : await GetVariablesAsync(execution.VariableSetId, execution.VariableOverrides, cancellationToken);
 
             // Builtin variables
-            variables?.Values.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
-            variables?.Values.Add(nameof(execution.Instance.Environment), execution.Instance.Environment);
+            variables.Values.Add(nameof(execution.Instance.Tenant), execution.Instance.Tenant);
+            variables.Values.Add(nameof(execution.Instance.Environment), execution.Instance.Environment);
 
             var i = 1;
             foreach (var step in template.Steps.OrderBy(x => x.Order))
             {
                 var logs = new List<string> { $"Starting step {step.Order}: '{step.Name}'" };
 
-                var command = Substitute(step.Command, variables?.Values);
+                var command = string.IsNullOrWhiteSpace(step.Command)
+                    ? ""
+                    : Substitute(step.Command, variables.Values);
 
-                var folder = Substitute(step.WorkingFolder, variables?.Values);
+                var folder = Substitute(step.WorkingFolder, variables.Values);
                 folder = Path.GetFullPath(folder, Path.GetFullPath(this.instanceOptions?.Value?.DefaultFolder ?? "."));
                 if (!Directory.Exists(folder))
                 {
@@ -73,7 +77,7 @@ namespace Oliver.Client.Executing
                 logs.Add($"Executing at folder: '{folder}'");
                 var result = step.Type switch
                 {
-                    Template.StepType.Archive => await UnpackArchiveAsync(step.FileName, folder),
+                    Template.StepType.Archive => await UnpackArchiveAsync(step.FileName, folder, variables.Values),
                     Template.StepType.CMD => await this.runner.RunCMDAsync(folder, command),
                     Template.StepType.PShell => await this.runner.RunPowerShellAsync(folder, command),
                     Template.StepType.Docker => await this.runner.RunDockerAsync(folder, command),
@@ -91,18 +95,24 @@ namespace Oliver.Client.Executing
 
                 logs.Add($"Step {step.Order} - '{step.Name}' finished");
 
-                await this.logSender.LogStep(execution.Id, step.Order, i == template.Steps.Count + 1, logs, cancellationToken: cancellationToken);
+                await this.logSender.LogStep(execution.Id, step.Order, i == template.Steps.Count, logs, cancellationToken: cancellationToken);
                 i++;
             }
         }
 
-        private async Task<(bool isSuccessed, string[] logs)> UnpackArchiveAsync(string fileName, string folder)
+        private async Task<(bool isSuccessed, string[] logs)> UnpackArchiveAsync(string fileName, string folder, Dictionary<string, string> variables)
         {
-            var file = await this.apiClient.GetArchiveAsync(fileName);
+            var file = await this.apiClient.GetPackageAsync(fileName);
             if (file is null)
                 return (false, new[] { $"Failed to download archive with name ''" });
-            else
-                return this.fileManager.UnpackArchive(folder, file);
+
+            var result = this.fileManager.UnpackArchive(folder, file);
+            if (!result.isSuccessed)
+                return result;
+
+            var subResult = await SubstituteFilesInFolderAsync(folder, variables);
+            var logs = result.logs.Concat(subResult.logs).ToArray();
+            return (subResult.isSuccessed, logs);
         }
 
         private async Task<VariableSet> GetVariablesAsync(long variableSetId, Dictionary<string, string> overrides, CancellationToken cancellationToken)
@@ -116,12 +126,12 @@ namespace Oliver.Client.Executing
             return set;
         }
 
-        private static string Substitute(string command, Dictionary<string, string> variables)
+        private static string Substitute(string text, Dictionary<string, string> variables)
         {
             if (variables is null)
-                return command;
+                return text;
 
-            var result = command;
+            var result = text;
             string temp;
             do
             {
@@ -133,6 +143,29 @@ namespace Oliver.Client.Executing
             }
             while (temp != result);
             return result;
+        }
+
+        private static async Task<(bool isSuccessed, string[] logs)> SubstituteFilesInFolderAsync(
+            string folder, Dictionary<string, string> variables)
+        {
+            var logs = new List<string>();
+            try
+            {
+                var fileTypes = substituteFileTypes.Split(';');
+                foreach (var filePath in fileTypes.SelectMany(x => Directory.EnumerateFiles(folder, x)))
+                {
+                    logs.Add($"Replacing variables in file: {filePath}");
+                    var text = await System.IO.File.ReadAllTextAsync(filePath);
+                    text = Substitute(text, variables);
+                    await System.IO.File.WriteAllTextAsync(filePath, text);
+                    logs.Add($"Variables in file '{filePath}' succesfuly replaced.");
+                }
+                return (true, logs.ToArray());
+            }
+            catch (Exception)
+            {
+                return (false, logs.ToArray());
+            }
         }
     }
 }

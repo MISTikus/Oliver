@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Linq;
 
 namespace Oliver.Api
 {
@@ -15,10 +16,19 @@ namespace Oliver.Api
             .CreateDefaultBuilder(args)
             .ConfigureAppConfiguration(c =>
             {
-                c.AddEnvironmentVariables();
+                c.AddEnvironmentVariables("OLI_");
 
-                var settingsFolder = Environment.GetEnvironmentVariable("SETTINGS_FOLDER");
-                var settingsFile = $"{settingsFolder}/appsettings.json";
+                /*
+                 Default args prefixes are: '/', '--', '-'
+                 But no boolean switch support
+                 Now we can use '?' prefix for boolean switch, ex:
+                    Oliver.Api.exe ?nologs
+                    SomeWorker.exe ?shouldSendNotification
+                 */
+                c.AddInMemoryCollection(args.Where(x => x.StartsWith("?")).ToDictionary(x => x[1..], v => "true"));
+
+                var workingFolder = Environment.GetEnvironmentVariable("OLI_STORAGE__WORKINGFOLDER");
+                var settingsFile = $"{workingFolder}/appsettings.json";
                 if (System.IO.File.Exists(settingsFile))
                     c.AddJsonFile(settingsFile);
             })

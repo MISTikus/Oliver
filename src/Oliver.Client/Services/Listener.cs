@@ -33,6 +33,7 @@ namespace Oliver.Client.Services
                 for (var i = 0; i < options.Instances.Length; i++)
                 {
                     var instance = options.Instances[i];
+                    this.logger.LogTrace($"Start executiong task for {instance.Tenant}.{instance.Environment}...");
                     tasks[i] = Task.Run(async () =>
                     {
                         var response = await this.apiClient.CheckExecutions(instance.Tenant, instance.Environment, cancellationToken);
@@ -43,6 +44,7 @@ namespace Oliver.Client.Services
                         }
                     }, cancellationToken);
                 }
+                this.logger.LogTrace($"Waiting for {tasks.Length} tasks to finish...");
                 await Task.WhenAll(tasks);
                 await Task.Delay(3000, cancellationToken);
             }

@@ -101,10 +101,16 @@ namespace Oliver.Api.Controllers
                         execution.State = Execution.ExecutionState.Retrying;
                     }
                     else
+                    {
                         execution.State = result.Value;
+                        this.logger.LogTrace($"Execution {id} failed.");
+                    }
                 }
                 else
+                {
                     execution.State = result.Value;
+                    this.logger.LogTrace($"Execution {id} finished.");
+                }
             }
 
             collection.Update(execution);

@@ -4,8 +4,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Oliver.Client.Configurations;
 using Oliver.Client.Executing;
-using Oliver.Client.Infrastructure;
 using Oliver.Client.Services;
+using Oliver.Common.Infrastructure;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -51,14 +51,14 @@ namespace Oliver.Client
                         serverOptions.BaseUrl,
                         new ApiUrlHelper(serverOptions.ApiVersion),
                         s.GetService<JsonSerializerOptions>(),
-                        s.GetService<ILogger<OliverApiClient>>()))
+                        m => s.GetService<ILogger<OliverApiClient>>().LogError(m)))
                     .AddSingleton<ILogSender, LogSender>()
                     .AddSingleton<Executor>()
                     .AddSingleton<Func<IExecutor>>(s => () => s.GetRequiredService<Executor>())
                     .AddLogging(c =>
                     {
                         c.AddConsole();
-                        if (!args.Contains("--nologs"))
+                        if (!args.Contains("?nologs"))
                             c.AddProvider(new FileLoggerProvider(logOptions));
                     });
 
