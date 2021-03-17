@@ -17,6 +17,7 @@ Deploy management app
 - [x] Unpack archive with binaries on target machine
 - [x] Store and substitute configurations
 - [x] Run custom scripts (`.ps1`, `.cmd`) on target machine
+- [ ] Customizable packages lifecycle
 - [ ] Assign **Instance** (tenant/environment) to client from API
 - [ ] Administrator UI
 
