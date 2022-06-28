@@ -1,11 +1,8 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using static Oliver.Client.Configurations.Client;
+﻿using static Oliver.Client.Configurations.Client;
 
-namespace Oliver.Client.Executing
+namespace Oliver.Client.Executing;
+
+internal interface IExecutor
 {
-    internal interface IExecutor
-    {
-        Task ExecuteAsync(Instance instance, long data, CancellationToken cancellationToken);
-    }
+    Task ExecuteAsync(Instance instance, long data, CancellationToken cancellationToken);
 }

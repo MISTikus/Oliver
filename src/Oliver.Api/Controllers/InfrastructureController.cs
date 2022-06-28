@@ -1,14 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Oliver.Api.Controllers
+namespace Oliver.Api.Controllers;
+
+[Route("infrastructure")]
+[ApiController]
+public class InfrastructureController : ControllerBase
 {
-    [Route("infrastructure")]
-    [ApiController]
-    public class InfrastructureController : ControllerBase
-    {
-        [HttpGet("health")]
-        [AllowAnonymous]
-        public ActionResult<string> HealthCheck() => Ok("Healthy");
-    }
+    [HttpGet("health")]
+    [AllowAnonymous]
+    public ActionResult<string> HealthCheck() => Ok("Healthy");
 }

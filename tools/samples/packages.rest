@@ -15,4 +15,4 @@ Content-Type: application/zip
 
 
 ### Get file by name
-GET {{host}}/api/packages/somescript.zip
+GET {{host}}/api/{{version}}/packages/somescript.zip

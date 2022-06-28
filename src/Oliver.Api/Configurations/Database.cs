@@ -1,7 +1,6 @@
-﻿namespace Oliver.Api.Configurations
+﻿namespace Oliver.Api.Configurations;
+
+public record Database
 {
-    public class Database
-    {
-        public string Path { get; set; }
-    }
+    public string Path { get; set; }
 }

@@ -17,6 +17,7 @@ Deploy management app
 - [x] Unpack archive with binaries on target machine
 - [x] Store and substitute configurations
 - [x] Run custom scripts (`.ps1`, `.cmd`) on target machine
+- [ ] Linux scripts (`.sh`)
 - [ ] Customizable packages lifecycle
 - [ ] Assign **Instance** (tenant/environment) to client from API
 - [ ] Administrator UI
@@ -45,7 +46,7 @@ Deploy management app
 ## Questions/Issues
 
 - [ ] For now, if more than one client, execution will be executed only on one client
-- [ ] Maybe `.sh` support?
+- [x] Maybe `.sh` support? (added to future features)
 - [ ] Different transport (brocker) support
   - [x] File system
   - [ ] Rabbit
@@ -59,3 +60,4 @@ Deploy management app
   - [ ] MongoDb
   - [ ] Mysql?
   - [ ] else?
+- [ ] Fix logging formatters
