@@ -1,12 +1,12 @@
 # Oliver
 
-Deploy management app
+_Oliver_ is multi-tenant deploy management app.
+
+Check [ToDo](#todo) for currently available features.
 
 ---
 
-[Wikipedia. Remote control history](https://en.wikipedia.org/wiki/Remote_control#History)
-
-> In 1894, the first example of wirelessly controlling at a distance was during a demonstration by the British physicist Oliver Lodge, in which he made use of a Branly's coherer to make a mirror galvanometer move a beam of light when an electromagnetic wave was artificially generated.
+Named in memory of [Oliver Lodge](https://en.wikipedia.org/wiki/Oliver_Lodge#Accomplishments)
 
 ---
 
