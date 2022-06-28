@@ -1,25 +1,24 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
-using System.IO;
 
-namespace Oliver.Api.Extensions
+namespace Oliver.Api.Extensions;
+
+public static class MappingExtensions
 {
-    public static class MappingExtensions
+    public static T Deserialize<T>(this byte[] bytes)
     {
-        public static T Deserialize<T>(this byte[] bytes)
-        {
-            using var ms = new MemoryStream(bytes);
-            using var reader = new BsonDataReader(ms);
-            var serializer = new JsonSerializer();
-            return serializer.Deserialize<T>(reader);
-        }
-        public static byte[] Serialize<T>(this T value)
-        {
-            using var ms = new MemoryStream();
-            using var writer = new BsonDataWriter(ms);
-            var serializer = new JsonSerializer();
-            serializer.Serialize(writer, value);
-            return ms.ToArray();
-        }
+        using MemoryStream ms = new(bytes);
+        using BsonDataReader reader = new(ms);
+        JsonSerializer serializer = new();
+        return serializer.Deserialize<T>(reader);
+    }
+
+    public static byte[] Serialize<T>(this T value)
+    {
+        using MemoryStream ms = new();
+        using BsonDataWriter writer = new(ms);
+        JsonSerializer serializer = new();
+        serializer.Serialize(writer, value);
+        return ms.ToArray();
     }
 }

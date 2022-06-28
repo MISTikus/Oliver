@@ -1,106 +1,101 @@
 ﻿using Microsoft.Extensions.Logging;
 using Oliver.Client.Services;
 using Oliver.Common.Models;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Oliver.Client.Executing
+namespace Oliver.Client.Executing;
+
+internal class LogSender : ILogSender
 {
-    internal class LogSender : ILogSender
+    private readonly IApiClient apiClient;
+    private readonly ILogger<LogSender> logger;
+    private readonly ConcurrentQueue<Action> queue;
+    private readonly CancellationTokenSource cancellation;
+
+    public LogSender(IApiClient apiClient, ILogger<LogSender> logger)
     {
-        private readonly IApiClient apiClient;
-        private readonly ILogger<LogSender> logger;
-        private readonly ConcurrentQueue<Action> queue;
-        private readonly CancellationTokenSource cancellation;
+        this.apiClient = apiClient;
+        this.logger = logger;
+        queue = new ConcurrentQueue<Action>();
+        cancellation = new CancellationTokenSource();
+        Task.Run(QueueListenerAsync, cancellation.Token);
+    }
 
-        public LogSender(IApiClient apiClient, ILogger<LogSender> logger)
+    public Task LogStep(long executionId, int stepId, bool isLastStep = false, List<string> logs = null, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.Register(() => cancellation.Cancel());
+
+        queue.Enqueue(async () =>
         {
-            this.apiClient = apiClient;
-            this.logger = logger;
-            this.queue = new ConcurrentQueue<Action>();
-            this.cancellation = new CancellationTokenSource();
-            Task.Run(QueueListenerAsync, this.cancellation.Token);
-        }
-
-        public Task LogStep(long executionId, int stepId, bool isLastStep = false, List<string> logs = null, CancellationToken cancellationToken = default)
-        {
-            cancellationToken.Register(() => this.cancellation.Cancel());
-
-            this.queue.Enqueue(async () =>
+            await apiClient.SendExecutionLog(executionId, isLastStep, new Execution.StepState
             {
-                await this.apiClient.SendExecutionLog(executionId, isLastStep, new Execution.StepState
-                {
-                    Executor = Environment.MachineName,
-                    StepId = stepId,
-                    IsSuccess = true,
-                    Log = logs
-                }, cancellationToken);
-            });
+                Executor = Environment.MachineName,
+                StepId = stepId,
+                IsSuccess = true,
+                Log = logs
+            }, cancellationToken);
+        });
 
-            this.logger.LogInformation($"ExecutionId: {executionId};\nStepId: {stepId}");
-            this.logger.LogInformation(string.Join('\n', logs));
-            return Task.CompletedTask;
-        }
+        logger.LogInformation($"ExecutionId: {executionId};\nStepId: {stepId}");
+        logger.LogInformation(string.Join('\n', logs));
+        return Task.CompletedTask;
+    }
 
-        public Task LogError(long executionId, string message, int stepId = 0, bool isLastStep = false, Exception error = null, List<string> logs = null, CancellationToken cancellationToken = default)
+    public Task LogError(long executionId, string message, int stepId = 0, bool isLastStep = false, Exception error = null, List<string> logs = null, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.Register(() => cancellation.Cancel());
+
+        queue.Enqueue(async () =>
         {
-            cancellationToken.Register(() => this.cancellation.Cancel());
+            logs ??= new List<string>();
+            logs.Add(message);
 
-            this.queue.Enqueue(async () =>
+            if (error != null)
             {
-                logs ??= new List<string>();
-                logs.Add(message);
-
-                if (error != null)
-                {
-                    logs.Add(error.Message);
-                    logs.Add(error.StackTrace);
-                }
-
-                await this.apiClient.SendExecutionLog(executionId, isLastStep, new Execution.StepState
-                {
-                    Executor = Environment.MachineName,
-                    StepId = stepId,
-                    IsSuccess = false,
-                    Log = logs
-                }, cancellationToken);
-            });
-
-            this.logger.LogWarning(error, $"{message}\nExecutionId: {executionId};\nStepId: {stepId}");
-            return Task.CompletedTask;
-        }
-
-        private async Task QueueListenerAsync()
-        {
-            while (!this.cancellation.IsCancellationRequested)
-            {
-                if (this.queue.TryDequeue(out var action))
-                {
-                    try
-                    {
-                        action();
-                    }
-                    catch (System.Net.WebException e)
-                    {
-                        this.logger.LogWarning(e, "Error while trying to send step log...");
-                        this.queue.Enqueue(action);
-                    }
-                    catch (Exception e)
-                    {
-                        this.logger.LogWarning(e, "Error while trying to send step log...");
-                    }
-                }
-                await Task.Delay(100);
+                logs.Add(error.Message);
+                logs.Add(error.StackTrace);
             }
-        }
+
+            await apiClient.SendExecutionLog(executionId, isLastStep, new Execution.StepState
+            {
+                Executor = Environment.MachineName,
+                StepId = stepId,
+                IsSuccess = false,
+                Log = logs
+            }, cancellationToken);
+        });
+
+        logger.LogWarning(error, $"{message}\nExecutionId: {executionId};\nStepId: {stepId}");
+        return Task.CompletedTask;
     }
 
-    internal interface ILogSender
+    private async Task QueueListenerAsync()
     {
-        Task LogStep(long executionId, int stepId, bool isLastStep = false, List<string> logs = null, CancellationToken cancellationToken = default);
-        Task LogError(long executionId, string message, int stepId = 0, bool isLastStep = false, Exception error = null, List<string> logs = null, CancellationToken cancellationToken = default);
+        while (!cancellation.IsCancellationRequested)
+        {
+            if (queue.TryDequeue(out Action action))
+            {
+                try
+                {
+                    action();
+                }
+                catch (System.Net.WebException e)
+                {
+                    logger.LogWarning(e, "Error while trying to send step log...");
+                    queue.Enqueue(action);
+                }
+                catch (Exception e)
+                {
+                    logger.LogWarning(e, "Error while trying to send step log...");
+                }
+            }
+            await Task.Delay(100);
+        }
     }
+}
+
+internal interface ILogSender
+{
+    Task LogStep(long executionId, int stepId, bool isLastStep = false, List<string> logs = null, CancellationToken cancellationToken = default);
+    Task LogError(long executionId, string message, int stepId = 0, bool isLastStep = false, Exception error = null, List<string> logs = null, CancellationToken cancellationToken = default);
 }

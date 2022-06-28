@@ -1,8 +1,7 @@
-﻿namespace Oliver.Client.Configurations
+﻿namespace Oliver.Client.Configurations;
+
+internal record Server
 {
-    internal class Server
-    {
-        public string BaseUrl { get; set; }
-        public string ApiVersion { get; set; } = "1";
-    }
+    public string BaseUrl { get; set; }
+    public string ApiVersion { get; set; } = "1";
 }

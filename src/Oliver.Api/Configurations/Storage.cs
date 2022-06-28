@@ -1,8 +1,7 @@
-﻿namespace Oliver.Api.Configurations
+﻿namespace Oliver.Api.Configurations;
+
+public record Storage
 {
-    public class Storage
-    {
-        public string QueuesFolder { get; set; }
-        public string BlobFolder { get; set; }
-    }
+    public string QueuesFolder { get; set; }
+    public string BlobFolder { get; set; }
 }
