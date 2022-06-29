@@ -87,9 +87,14 @@ public class Startup
 
 
         app.UseHttpsRedirection()
+            .UseStaticFiles()
             .UseRouting()
             .UseAuthorization()
-            .UseEndpoints(endpoints => endpoints.MapControllers())
+            .UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                endpoints.MapFallbackToFile("index.html");
+            })
         ;
         logger.LogInformation("Application initialized...");
     }

@@ -15,11 +15,19 @@
 		<PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.2" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.1" />
 		<PackageReference Include="WarnAboutTODOs" Version="1.6.0" />
+		<PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="6.0.6" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Oliver.Common\Oliver.Common.csproj" />
 	</ItemGroup>
 
+	<Target Name="NpmInstall" BeforeTargets="PreBuildEvent" Condition="!Exists('../Oliver.Frontend/node_modules')" >
+		<Exec Command="npm i" WorkingDirectory="../Oliver.Frontend" />
+	</Target>
 
+	<Target Name="BuildFrontend" AfterTargets="NpmInstall" >
+	  <Exec Command="npm run build" WorkingDirectory="../Oliver.Frontend" />
+	</Target>
+	
 </Project>

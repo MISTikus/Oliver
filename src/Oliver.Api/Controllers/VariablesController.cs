@@ -14,11 +14,11 @@ public class VariablesController : ControllerBase
     public VariablesController(Func<ILiteDatabase> databaseFactory) => this.databaseFactory = databaseFactory;
 
     [HttpGet("{tenant}/{environment}")]
-    public ActionResult<VariableSet> Get([FromRoute] string tenant, [FromRoute] string environemnt)
+    public ActionResult<VariableSet> Get([FromRoute] string tenant, [FromRoute] string environment)
     {
         using ILiteDatabase db = databaseFactory();
         ILiteCollection<VariableSet> collection = db.GetCollection<VariableSet>();
-        VariableSet variables = collection.FindOne(x => x.Instance.Tenant == tenant && x.Instance.Environment == environemnt);
+        VariableSet variables = collection.FindOne(x => x.Instance.Tenant == tenant && x.Instance.Environment == environment);
         return variables is null
             ? NotFound()
             : Ok(variables);
